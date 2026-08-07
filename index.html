@@ -147,7 +147,39 @@
           <span>＋</span> Novo lançamento
         </button>
 
-        <div class="paper-footer-note">Livro Caixa · Versão 3.0.3.1</div>
+        <div class="paper-footer-note">Livro Caixa · Versão 3.1.0</div>
+      </section>
+
+      <!-- PLANEJAMENTO -->
+      <section class="paper-page" id="view-planning" data-view="planning">
+        <div class="paper-grain" aria-hidden="true"></div>
+        <div class="page-heading">
+          <span class="eyebrow">Planejamento</span>
+          <h2>Próximos compromissos</h2>
+          <p>Cartões, lançamentos futuros e contas fixas em um só lugar.</p>
+        </div>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div><span class="eyebrow">Cartões de crédito</span><h2>Meus cartões</h2></div>
+            <button class="text-action" id="addCardBtn" type="button">adicionar</button>
+          </div>
+          <div id="creditCardList" class="credit-card-list"></div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div><span class="eyebrow">Contas fixas</span><h2>Recorrências mensais</h2></div>
+          </div>
+          <div id="recurringList" class="planning-list"></div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div><span class="eyebrow">Agenda</span><h2>Lançamentos futuros</h2></div>
+          </div>
+          <div id="futureList" class="planning-list"></div>
+        </section>
       </section>
 
       <!-- LIVRO -->
@@ -418,7 +450,7 @@
 
         <section class="settings-section about-section">
           <span class="eyebrow">Sobre</span>
-          <h3>Livro Caixa · Versão 3.0.3</h3>
+          <h3>Livro Caixa · Versão 3.1.0</h3>
           <p>Controle financeiro pessoal com armazenamento local, funcionamento offline e sem necessidade de conta.</p>
         </section>
       </section>
@@ -436,6 +468,10 @@
       <button class="nav-item" type="button" data-target="stats">
         <span class="nav-icon">⌁</span>
         <span>Análise</span>
+      </button>
+      <button class="nav-item" type="button" data-target="planning">
+        <span class="nav-icon">◷</span>
+        <span>Planejar</span>
       </button>
       <button class="nav-item" type="button" data-target="settings">
         <span class="nav-icon">⚙</span>
@@ -489,6 +525,16 @@
         </label>
 
         <label class="form-field">
+          <span>Forma de pagamento</span>
+          <select id="entryCard"><option value="">Conta / dinheiro</option></select>
+        </label>
+
+        <label class="check-field" id="recurringField">
+          <input id="entryRecurring" type="checkbox">
+          <span><b>Lançamento fixo mensal</b><small>Será repetido todo mês até você cancelar.</small></span>
+        </label>
+
+        <label class="form-field">
           <span>Observação <em>opcional</em></span>
           <textarea id="entryNote" maxlength="160" rows="3" placeholder="Alguma informação adicional"></textarea>
         </label>
@@ -497,6 +543,24 @@
           <button class="danger-text-button" type="button" id="deleteEntryBtn" hidden>Excluir</button>
           <button class="primary-paper-button compact" type="submit">Carimbar lançamento</button>
         </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- MODAL CARTÃO -->
+  <div class="modal-backdrop" id="cardModal" hidden>
+    <section class="paper-modal small-modal" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle">
+      <button type="button" class="modal-close" data-close-card aria-label="Fechar">×</button>
+      <div class="modal-heading"><span class="eyebrow">Crédito</span><h2 id="cardModalTitle">Novo cartão</h2></div>
+      <form id="cardForm">
+        <input type="hidden" id="cardId">
+        <label class="form-field"><span>Nome do cartão</span><input id="cardName" maxlength="40" required placeholder="Ex.: Nubank"></label>
+        <div class="form-grid">
+          <label class="form-field"><span>Fecha dia</span><input id="cardClosingDay" type="number" min="1" max="31" required></label>
+          <label class="form-field"><span>Vence dia</span><input id="cardDueDay" type="number" min="1" max="31" required></label>
+        </div>
+        <label class="form-field"><span>Limite <em>opcional</em></span><div class="money-input"><span>R$</span><input id="cardLimit" type="number" min="0" step="0.01" placeholder="0,00"></div></label>
+        <div class="modal-actions"><button class="danger-text-button" type="button" id="deleteCardBtn" hidden>Excluir</button><button class="primary-paper-button compact" type="submit">Salvar cartão</button></div>
       </form>
     </section>
   </div>

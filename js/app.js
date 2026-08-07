@@ -15,7 +15,9 @@ const KEYS = {
   month: "lc:v3:month",
   entriesPrefix: "lc:v3:entries:",
   budgetPrefix: "lc:v3:budget:",
-  lastBackup: "lc:v3:lastBackup"
+  lastBackup: "lc:v3:lastBackup",
+  cards: "lc:v3:cards",
+  recurring: "lc:v3:recurring"
 };
 
 let categories = [];
@@ -26,6 +28,8 @@ let ledgerCategory = "all";
 let ledgerSort = "date-desc";
 let ledgerSearch = "";
 let ledgerDayFilter = null;
+let cards = [];
+let recurringRules = [];
 
 const $ = id => document.getElementById(id);
 
@@ -90,6 +94,33 @@ function saveCategories(){
   localStorage.setItem(KEYS.categories, JSON.stringify(categories));
 }
 
+function safeArray(key){
+  try{ const value=JSON.parse(localStorage.getItem(key)||"[]"); return Array.isArray(value)?value:[]; }
+  catch{ return []; }
+}
+
+function loadPlanningData(){
+  cards=safeArray(KEYS.cards);
+  recurringRules=safeArray(KEYS.recurring);
+}
+function saveCards(){ localStorage.setItem(KEYS.cards,JSON.stringify(cards)); }
+function saveRecurring(){ localStorage.setItem(KEYS.recurring,JSON.stringify(recurringRules)); }
+function uid(prefix="id"){ return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`; }
+
+function materializeRecurringMonth(monthKey){
+  const [year,month]=monthKey.split("-").map(Number);
+  const key=entryStorageKey(monthKey);
+  let monthEntries=safeArray(key);
+  let changed=false;
+  recurringRules.filter(r=>r.active!==false && monthKey>=r.startDate.slice(0,7)).forEach(rule=>{
+    if(monthEntries.some(e=>e.recurringId===rule.id)) return;
+    const day=Math.min(Number(rule.day)||1,new Date(year,month,0).getDate());
+    monthEntries.push({id:uid("rec"),type:rule.type,description:rule.description,value:Number(rule.value),category:rule.category,date:`${monthKey}-${String(day).padStart(2,"0")}`,note:rule.note||"",cardId:rule.cardId||"",recurringId:rule.id,createdAt:Date.now()});
+    changed=true;
+  });
+  if(changed) localStorage.setItem(key,JSON.stringify(monthEntries));
+}
+
 function migrateLegacyMonth(monthKey){
   const newKey = entryStorageKey(monthKey);
   if(localStorage.getItem(newKey)) return;
@@ -131,6 +162,7 @@ function loadEntriesForMonth(monthKey){
 }
 
 function loadMonthData(){
+  materializeRecurringMonth(getMonthKey());
   entries = loadEntriesForMonth(getMonthKey());
   ledgerDayFilter = null;
   renderAll();
@@ -439,12 +471,13 @@ function renderTransactions(){
     const [y,m,d] = e.date.split("-");
     const monthShort = MONTHS_SHORT[Number(m)-1];
     const sign = e.type==="expense"?"−":"+";
+    const card = cards.find(c=>c.id===e.cardId);
     return `
       <article class="tx" data-entry-id="${escapeHtml(e.id)}">
         <div class="tx-date"><strong>${d}</strong>${monthShort}</div>
         <div class="tx-info">
           <span class="tx-title">${escapeHtml(e.description)}</span>
-          <span class="tx-meta">${escapeHtml(e.category)}${e.note?" · com observação":""}</span>
+          <span class="tx-meta">${escapeHtml(e.category)}${card?` · ${escapeHtml(card.name)}`:""}${e.recurringId?" · fixo":""}${e.note?" · com observação":""}</span>
         </div>
         <span class="tx-value ${e.type}">${sign} ${formatBRL(e.value)}</span>
       </article>`;
@@ -470,7 +503,49 @@ function renderCategoryControls(){
   filter.innerHTML = `<option value="all">Todas</option>` +
     categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   filter.value = categories.includes(prevFilter) ? prevFilter : "all";
+
+  const cardSelect=$("entryCard");
+  const selected=cardSelect.value;
+  cardSelect.innerHTML='<option value="">Conta / dinheiro</option>'+cards.map(c=>`<option value="${escapeHtml(c.id)}">Cartão · ${escapeHtml(c.name)}</option>`).join("");
+  if(cards.some(c=>c.id===selected)) cardSelect.value=selected;
 }
+
+function allStoredEntries(){
+  const result=[];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i)||"";
+    if(!key.startsWith(KEYS.entriesPrefix)) continue;
+    safeArray(key).forEach(entry=>result.push(entry));
+  }
+  return result;
+}
+
+function renderPlanning(){
+  const cardTarget=$("creditCardList");
+  if(!cards.length) cardTarget.innerHTML='<div class="empty-planning">Nenhum cartão cadastrado. Adicione quantos precisar.</div>';
+  else cardTarget.innerHTML=cards.map(card=>{
+    const spent=entries.filter(e=>e.type==="expense"&&e.cardId===card.id).reduce((sum,e)=>sum+Number(e.value||0),0);
+    const available=Number(card.limit||0)-spent;
+    return `<article class="credit-card-item" data-card-id="${escapeHtml(card.id)}"><header><div><small>Cartão de crédito</small><h3>${escapeHtml(card.name)}</h3></div><strong>${formatBRL(spent)}</strong></header><div class="card-numbers"><span>Fecha<strong>dia ${card.closingDay}</strong></span><span>Vence<strong>dia ${card.dueDay}</strong></span>${card.limit?`<span>Disponível<strong>${formatBRL(available)}</strong></span>`:""}</div></article>`;
+  }).join("");
+
+  const recurringTarget=$("recurringList");
+  const activeRules=recurringRules.filter(r=>r.active!==false);
+  recurringTarget.innerHTML=activeRules.length?activeRules.map(rule=>`<article class="planning-item"><span class="planning-date"><strong>${String(rule.day).padStart(2,"0")}</strong>todo mês</span><span class="planning-copy"><strong>${escapeHtml(rule.description)}</strong><small>${escapeHtml(rule.category)} · <span class="recurring-badge">fixo</span></small></span><strong class="planning-value">${rule.type==="income"?"+":"−"} ${formatBRL(rule.value)}</strong><span class="planning-actions"><button class="mini-action" type="button" data-stop-recurring="${escapeHtml(rule.id)}">cancelar recorrência</button></span></article>`).join(""):'<div class="empty-planning">Nenhum lançamento fixo ativo.</div>';
+
+  const currentKey=getMonthKey();
+  const future=allStoredEntries().filter(e=>e.date&&e.date.slice(0,7)>currentKey).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,30);
+  const futureTarget=$("futureList");
+  futureTarget.innerHTML=future.length?future.map(e=>{const [y,m,d]=e.date.split("-");return `<article class="planning-item"><span class="planning-date"><strong>${d}</strong>${MONTHS_SHORT[Number(m)-1]} ${y}</span><span class="planning-copy"><strong>${escapeHtml(e.description)}</strong><small>${escapeHtml(e.category)} · <span class="future-badge">futuro</span></small></span><strong class="planning-value">${e.type==="income"?"+":"−"} ${formatBRL(e.value)}</strong></article>`}).join(""):'<div class="empty-planning">Nenhum lançamento futuro cadastrado.</div>';
+}
+
+function openCardModal(card=null){
+  $("cardModal").hidden=false; document.body.classList.add("modal-open");
+  $("cardId").value=card?.id||""; $("cardName").value=card?.name||""; $("cardClosingDay").value=card?.closingDay||""; $("cardDueDay").value=card?.dueDay||""; $("cardLimit").value=card?.limit||"";
+  $("cardModalTitle").textContent=card?"Editar cartão":"Novo cartão"; $("deleteCardBtn").hidden=!card;
+  setTimeout(()=>$("cardName").focus(),50);
+}
+function closeCardModal(){ $("cardModal").hidden=true; document.body.classList.remove("modal-open"); }
 
 function getLastMonths(count=6){
   const out = [];
@@ -581,6 +656,7 @@ function renderAll(){
   renderCategoryControls();
   renderTransactions();
   renderAnalytics();
+  renderPlanning();
   $("budgetInput").value = getBudget() || "";
 }
 
@@ -625,6 +701,9 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryValue").value = entry.value;
     $("entryDate").value = entry.date;
     $("entryNote").value = entry.note || "";
+    $("entryCard").value = entry.cardId || "";
+    $("entryRecurring").checked = false;
+    $("recurringField").hidden = true;
     setEntryType(entry.type);
 
     if(!categories.includes(entry.category)){
@@ -643,6 +722,8 @@ function openEntryModal(entry=null,defaultDate=null){
     );
     setEntryType("expense");
     $("deleteEntryBtn").hidden = true;
+    $("recurringField").hidden = false;
+    $("entryRecurring").checked = false;
     if(categories.length) $("entryCategory").value = categories[0];
   }
 
@@ -677,6 +758,8 @@ function saveEntryFromForm(event){
   const category = $("entryCategory").value;
   const note = $("entryNote").value.trim();
   const id = $("entryId").value;
+  const cardId = $("entryCard").value;
+  const makeRecurring = $("entryRecurring").checked && !id;
 
   if(!description || !date || !category || !Number.isFinite(value) || value<=0){
     showToast("Preencha os campos obrigatórios.");
@@ -686,8 +769,13 @@ function saveEntryFromForm(event){
   const entryMonth = date.slice(0,7);
   const newEntry = {
     id:id || `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    type,description,value,category,date,note,createdAt:Date.now()
+    type,description,value,category,date,note,cardId,createdAt:Date.now()
   };
+
+  if(makeRecurring){
+    const rule={id:uid("rule"),type,description,value,category,note,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
+    recurringRules.push(rule); saveRecurring(); newEntry.recurringId=rule.id;
+  }
 
   if(entryMonth===getMonthKey()){
     const idx = entries.findIndex(e=>e.id===id);
@@ -801,7 +889,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "3.0",
+    version: "3.1.0",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
@@ -902,7 +990,7 @@ function exportCsv(){
   }
 
   const rows = [
-    ["Data","Mês","Tipo","Descrição","Categoria","Valor","Observação"]
+    ["Data","Mês","Tipo","Descrição","Categoria","Cartão","Valor","Observação"]
   ];
 
   all.forEach(e=>{
@@ -912,6 +1000,7 @@ function exportCsv(){
       e.type==="income" ? "Receita" : "Despesa",
       e.description,
       e.category,
+      (cards.find(c=>c.id===e.cardId)||{}).name || "",
       Number(e.value||0).toFixed(2).replace(".",","),
       e.note || ""
     ]);
@@ -1074,6 +1163,33 @@ $("reportModal").addEventListener("click",e=>{
 $("shareAppBtn").addEventListener("click",shareApp);
 $("refreshAppBtn").addEventListener("click",refreshApp);
 
+$("addCardBtn").addEventListener("click",()=>openCardModal());
+document.querySelectorAll("[data-close-card]").forEach(btn=>btn.addEventListener("click",closeCardModal));
+$("cardModal").addEventListener("click",e=>{ if(e.target===$("cardModal")) closeCardModal(); });
+$("creditCardList").addEventListener("click",e=>{ const row=e.target.closest("[data-card-id]"); if(row) openCardModal(cards.find(c=>c.id===row.dataset.cardId)); });
+$("cardForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=$("cardId").value; const name=$("cardName").value.trim(); const closingDay=Number($("cardClosingDay").value); const dueDay=Number($("cardDueDay").value); const limit=Number($("cardLimit").value)||0;
+  if(!name||closingDay<1||closingDay>31||dueDay<1||dueDay>31){ showToast("Confira os dados do cartão."); return; }
+  const card={id:id||uid("card"),name,closingDay,dueDay,limit}; const idx=cards.findIndex(c=>c.id===id); if(idx>=0) cards[idx]=card; else cards.push(card);
+  saveCards(); closeCardModal(); renderCategoryControls(); renderPlanning(); showToast(id?"Cartão atualizado.":"Cartão adicionado.");
+});
+$("deleteCardBtn").addEventListener("click",()=>{
+  const id=$("cardId").value; if(!id||!confirm("Excluir este cartão? Os lançamentos existentes serão preservados.")) return;
+  cards=cards.filter(c=>c.id!==id); saveCards(); closeCardModal(); renderCategoryControls(); renderPlanning(); showToast("Cartão excluído.");
+});
+$("recurringList").addEventListener("click",e=>{
+  const btn=e.target.closest("[data-stop-recurring]"); if(!btn||!confirm("Cancelar os próximos lançamentos desta conta fixa?")) return;
+  const rule=recurringRules.find(r=>r.id===btn.dataset.stopRecurring); if(rule) rule.active=false;
+  const currentKey=getMonthKey();
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i)||""; if(!key.startsWith(KEYS.entriesPrefix)) continue;
+    const monthKey=key.slice(KEYS.entriesPrefix.length); if(monthKey<=currentKey) continue;
+    const kept=safeArray(key).filter(entry=>entry.recurringId!==btn.dataset.stopRecurring); localStorage.setItem(key,JSON.stringify(kept));
+  }
+  saveRecurring(); renderPlanning(); showToast("Recorrência cancelada.");
+});
+
 window.addEventListener("online",updatePwaStatus);
 window.addEventListener("offline",updatePwaStatus);
 
@@ -1082,6 +1198,7 @@ updatePwaStatus();
 
 
 /* Inicialização */
+loadPlanningData();
 loadCategories();
 
 const storedMonth = localStorage.getItem(KEYS.month);
@@ -1228,6 +1345,7 @@ document.addEventListener("keydown",e=>{
     if(!$("entryModal").hidden) closeEntryModal();
     if(!$("budgetModal").hidden) closeBudgetModal();
     if(!$("reportModal").hidden) closeReport();
+    if(!$("cardModal").hidden) closeCardModal();
   }
 });
 
