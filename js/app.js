@@ -1038,36 +1038,47 @@ function updatePwaStatus(){
 async function refreshApp(){
   showToast("Buscando atualização…");
   try{
-    
-$("exportBackupBtn").addEventListener("click",exportBackup);
-$("importBackupBtn").addEventListener("click",()=>$("backupFileInput").click());
-$("backupFileInput").addEventListener("change",e=>{
-  const file = e.target.files && e.target.files[0];
-  if(file) importBackupFile(file);
-});
-$("exportCsvBtn").addEventListener("click",exportCsv);
-$("printPdfBtn").addEventListener("click",openReport);
-$("closeReportBtn").addEventListener("click",closeReport);
-$("printReportBtn").addEventListener("click",()=>window.print());
-document.querySelectorAll("[data-close-report]").forEach(btn=>btn.addEventListener("click",closeReport));
-$("reportModal").addEventListener("click",e=>{
-  if(e.target===$("reportModal")) closeReport();
-});
-$("shareAppBtn").addEventListener("click",shareApp);
-$("refreshAppBtn").addEventListener("click",refreshApp);
-
-window.addEventListener("online",updatePwaStatus);
-window.addEventListener("offline",updatePwaStatus);
-renderLastBackup();
-updatePwaStatus();
-
-if("serviceWorker" in navigator){
+    if("serviceWorker" in navigator){
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r=>r.update()));
     }
   }catch{}
   setTimeout(()=>location.reload(),500);
 }
+
+/* Eventos das ferramentas finais */
+$("exportBackupBtn").addEventListener("click",exportBackup);
+
+$("importBackupBtn").addEventListener("click",()=>{
+  $("backupFileInput").click();
+});
+
+$("backupFileInput").addEventListener("change",e=>{
+  const file = e.target.files && e.target.files[0];
+  if(file) importBackupFile(file);
+});
+
+$("exportCsvBtn").addEventListener("click",exportCsv);
+$("printPdfBtn").addEventListener("click",openReport);
+$("closeReportBtn").addEventListener("click",closeReport);
+$("printReportBtn").addEventListener("click",()=>window.print());
+
+document.querySelectorAll("[data-close-report]").forEach(btn=>{
+  btn.addEventListener("click",closeReport);
+});
+
+$("reportModal").addEventListener("click",e=>{
+  if(e.target === $("reportModal")) closeReport();
+});
+
+$("shareAppBtn").addEventListener("click",shareApp);
+$("refreshAppBtn").addEventListener("click",refreshApp);
+
+window.addEventListener("online",updatePwaStatus);
+window.addEventListener("offline",updatePwaStatus);
+
+renderLastBackup();
+updatePwaStatus();
 
 
 /* Inicialização */
