@@ -1,14 +1,30 @@
 {
-  "name": "Livro-Caixa · Gastos Mensais",
-  "short_name": "Livro-Caixa",
-  "description": "Controle pessoal de receitas e despesas mensais.",
+  "name": "Livro Caixa",
+  "short_name": "Livro Caixa",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#241a15",
   "theme_color": "#241a15",
+  "description": "Controle financeiro pessoal em estilo de livro-caixa.",
   "icons": [
-    {"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
-  ]
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
+  "orientation": "portrait-primary",
+  "lang": "pt-BR"
 }

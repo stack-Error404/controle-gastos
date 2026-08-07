@@ -1,187 +1,546 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#241a15" id="themeColorMeta">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Livro-Caixa">
-<meta name="description" content="Controle pessoal de receitas e despesas mensais, com backup local.">
-<title>Livro-Caixa</title>
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icon-180.png">
-<style>
-:root{
-  --bg:#241a15;--bg2:#3c2c22;--paper:#f4ecd8;--paper2:#fffaf0;--line:#cdbc90;
-  --ink:#2a2420;--muted:#6b5f4f;--green:#2f6f4e;--greenSoft:#e4ede4;--red:#a6342a;
-  --redSoft:#f4e3df;--gold:#b8933f;--blue:#41688b;--shadow:0 18px 40px rgba(0,0,0,.42);
-  --radius:16px;--input:rgba(255,255,255,.30)
-}
-:root[data-theme="dark"]{
-  --bg:#11100f;--bg2:#211d1a;--paper:#24211e;--paper2:#2d2925;--line:#554b40;
-  --ink:#f4ecd8;--muted:#c4b8a7;--green:#70b68f;--greenSoft:#233a2e;--red:#e4796f;
-  --redSoft:#442824;--gold:#d7b55d;--blue:#83a9ca;--shadow:0 18px 44px rgba(0,0,0,.55);
-  --input:rgba(255,255,255,.04)
-}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{
-  min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
-  background:radial-gradient(ellipse at top,var(--bg2),var(--bg) 72%);padding:calc(16px + env(safe-area-inset-top)) 12px calc(32px + env(safe-area-inset-bottom));
-}
-button,input,select{font:inherit}.app{width:min(100%,560px);margin:0 auto}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 4px}
-.brand{color:var(--gold);font-family:Georgia,serif;font-weight:700;letter-spacing:.13em;text-transform:uppercase;font-size:12px}.top-actions{display:flex;gap:8px}
-.icon-btn{border:1px solid rgba(184,147,63,.45);background:rgba(0,0,0,.12);color:var(--gold);width:40px;height:40px;border-radius:12px;cursor:pointer}
-.page{background:linear-gradient(180deg,var(--paper2),var(--paper));border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px 22px;overflow:hidden;position:relative}
-.page:before{content:"";position:absolute;left:31px;top:0;bottom:0;width:1px;background:rgba(166,52,42,.22);pointer-events:none}.content{padding-left:22px}
-.month-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}.month-nav button{border:0;background:transparent;color:var(--muted);font-size:26px;padding:4px 10px;cursor:pointer}.month-label{flex:1;text-align:center;font-family:Georgia,serif;font-weight:700;font-size:20px;text-transform:capitalize}
-.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}.summary{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--input)}.summary .k{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:5px}.summary .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;font-weight:700}.positive{color:var(--green)}.negative{color:var(--red)}
-.budget{border:1px dashed var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:16px}.budget-head{display:flex;gap:8px;align-items:center;justify-content:space-between}.budget-head span{font-size:12px;color:var(--muted)}.budget-edit{display:flex;gap:6px;align-items:center}.budget-edit input{width:110px}.progress{height:7px;background:var(--line);border-radius:10px;overflow:hidden;margin-top:9px}.progress span{height:100%;display:block;background:var(--green);width:0;transition:width .25s}.progress.over span{background:var(--red)}
-.section-title{font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);margin:18px 0 9px}.panel{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--input)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{display:flex;flex-direction:column;gap:4px}.field.full{grid-column:1/-1}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}input,select{width:100%;border:1px solid var(--line);background:var(--paper2);color:var(--ink);border-radius:9px;padding:10px;outline:none}input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 2px color-mix(in srgb,var(--green) 18%,transparent)}
-.type-switch{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden}.type-switch button{border:0;padding:9px;background:transparent;color:var(--muted);cursor:pointer}.type-switch button.active[data-type="expense"]{background:var(--redSoft);color:var(--red);font-weight:700}.type-switch button.active[data-type="income"]{background:var(--greenSoft);color:var(--green);font-weight:700}
-.primary{border:0;border-radius:10px;padding:11px 14px;background:var(--green);color:#fff;font-weight:700;cursor:pointer}.secondary{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:transparent;color:var(--ink);cursor:pointer}.danger{color:var(--red)}.small{font-size:12px;padding:7px 9px}
-.cat-add{display:flex;gap:7px;margin-top:8px}.cat-add input{font-size:13px}.cat-add button{white-space:nowrap}
-.chart-wrap{display:grid;grid-template-columns:142px 1fr;gap:13px;align-items:center}.donut{width:138px;height:138px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--line) 0 100%);position:relative}.donut:after{content:"";width:82px;height:82px;border-radius:50%;background:var(--paper);position:absolute}.donut-center{position:relative;z-index:2;text-align:center;font-size:10px;color:var(--muted)}.donut-center b{display:block;color:var(--ink);font-size:13px;margin-top:2px}.legend{display:flex;flex-direction:column;gap:6px}.legend-row{display:grid;grid-template-columns:9px 1fr auto;align-items:center;gap:6px;font-size:11px}.legend-dot{width:8px;height:8px;border-radius:50%}.legend-row span:last-child{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.filters{display:grid;grid-template-columns:1fr 126px;gap:8px;margin-bottom:8px}.tx-list{display:flex;flex-direction:column}.tx{display:grid;grid-template-columns:44px 1fr auto 30px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--line)}.tx:last-child{border-bottom:0}.tx-date{font-size:10px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.tx-desc{font-family:Georgia,serif;font-size:14px}.tx-meta{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}.tx-val{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:700;text-align:right}.delete{border:0;background:transparent;color:var(--red);font-size:17px;cursor:pointer;opacity:.72}.empty{padding:14px 4px;color:var(--muted);font-family:Georgia,serif;font-style:italic;font-size:14px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}.actions button{border:1px dashed var(--gold);background:transparent;color:var(--gold);border-radius:10px;padding:10px 8px;cursor:pointer;font-size:11px}.hint{color:#cfc4b1;font-size:11px;line-height:1.45;text-align:center;padding:13px 14px 0}.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,22px);background:#151310;color:#fff;padding:10px 15px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99}.toast.show{opacity:1;transform:translate(-50%,0)}
-.install-banner{display:none;margin-bottom:10px;border:1px solid rgba(184,147,63,.45);border-radius:12px;padding:10px 12px;color:#efe5d4;background:rgba(0,0,0,.16);font-size:12px;line-height:1.4}.install-banner button{margin-top:8px;border:0;background:var(--gold);color:#1f1812;padding:8px 11px;border-radius:8px;font-weight:700}
-@media(max-width:420px){.summary-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.chart-wrap{grid-template-columns:120px 1fr}.donut{width:116px;height:116px}.donut:after{width:70px;height:70px}.filters{grid-template-columns:1fr}.tx{grid-template-columns:40px 1fr auto 26px}.content{padding-left:19px}.page:before{left:27px}.actions{grid-template-columns:1fr 1fr}}
-@media print{body{background:#fff;padding:0}.topbar,.install-banner,.month-nav button,.entry-section,.filters,.actions,.hint,.delete,.cat-add{display:none!important}.app{width:100%;max-width:none}.page{box-shadow:none;border-radius:0;background:#fff}.page:before{display:none}.content{padding-left:0}.summary,.panel,.budget{break-inside:avoid}.chart-wrap{max-width:480px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#241a15">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Livro Caixa">
+  <title>Livro Caixa</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
-<div class="app">
-  <div class="install-banner" id="installBanner">
-    <b>Instale na tela inicial.</b> No iPhone: Safari → Compartilhar → Adicionar à Tela de Início.
-    <button type="button" id="installBtn" hidden>Instalar agora</button>
-  </div>
-  <div class="topbar">
-    <div class="brand">Livro-Caixa · Pessoal</div>
-    <div class="top-actions"><button class="icon-btn" id="themeBtn" aria-label="Alternar tema">◐</button></div>
-  </div>
-  <main class="page">
-    <div class="content">
-      <div class="month-nav"><button id="prevMonth" aria-label="Mês anterior">‹</button><div id="monthLabel" class="month-label">—</div><button id="nextMonth" aria-label="Próximo mês">›</button></div>
-
-      <div class="summary-grid">
-        <div class="summary"><div class="k">Receitas</div><div class="v positive" id="incomeTotal">R$ 0,00</div></div>
-        <div class="summary"><div class="k">Despesas</div><div class="v negative" id="expenseTotal">R$ 0,00</div></div>
-        <div class="summary"><div class="k">Saldo</div><div class="v" id="balanceTotal">R$ 0,00</div></div>
-        <div class="summary"><div class="k">Lançamentos</div><div class="v" id="entryCount">0</div></div>
+  <div class="app-shell">
+    <header class="leather-header">
+      <div class="brand-block">
+        <span class="brand-kicker">Controle financeiro pessoal</span>
+        <h1>Livro Caixa</h1>
+        <span class="brand-rule" aria-hidden="true"></span>
       </div>
 
-      <div class="budget">
-        <div class="budget-head"><span><b>Orçamento mensal</b><br><small id="budgetStatus">Sem limite definido</small></span><div class="budget-edit"><input id="budgetInput" inputmode="decimal" type="number" min="0" step="0.01" placeholder="R$ 0"><button class="secondary small" id="saveBudget" type="button">Salvar</button></div></div>
-        <div class="progress" id="budgetProgress"><span></span></div>
-      </div>
+      <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema">
+        <span class="theme-icon" aria-hidden="true">☾</span>
+      </button>
+    </header>
 
-      <section class="entry-section">
-        <div class="section-title">Novo lançamento</div>
-        <form class="panel" id="entryForm">
-          <div class="type-switch" aria-label="Tipo de lançamento"><button type="button" data-type="expense" class="active">Despesa</button><button type="button" data-type="income">Receita</button></div>
-          <div class="form-grid" style="margin-top:10px">
-            <div class="field"><label>Valor</label><input id="value" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00" required></div>
-            <div class="field"><label>Data</label><input id="date" type="date" required></div>
-            <div class="field full"><label>Descrição</label><input id="description" type="text" placeholder="Ex.: supermercado" required maxlength="80"></div>
-            <div class="field full"><label>Categoria</label><select id="category" required></select></div>
+    <main class="book-stage">
+      <!-- INÍCIO -->
+      <section class="paper-page active-view" id="view-home" data-view="home">
+        <div class="paper-grain" aria-hidden="true"></div>
+
+        <div class="month-switcher">
+          <button type="button" id="prevMonth" class="month-arrow" aria-label="Mês anterior">‹</button>
+          <div class="month-copy">
+            <small>Livro mensal</small>
+            <strong id="monthLabel">—</strong>
           </div>
-          <div class="cat-add"><input id="newCategory" type="text" maxlength="32" placeholder="Criar nova categoria"><button type="button" class="secondary small" id="addCategory">+ categoria</button></div>
-          <button type="submit" class="primary" style="width:100%;margin-top:10px">Salvar lançamento</button>
-        </form>
+          <button type="button" id="nextMonth" class="month-arrow" aria-label="Próximo mês">›</button>
+        </div>
+
+        <div class="ledger-rule"><span>Resumo</span></div>
+
+        <div class="stamp-grid">
+          <article class="stamp stamp-balance" id="balanceStamp">
+            <span class="stamp-ring"></span>
+            <small>Saldo</small>
+            <strong id="balanceValue">R$ 0,00</strong>
+            <em id="balanceCaption">disponível no mês</em>
+          </article>
+
+          <article class="stamp stamp-income">
+            <span class="stamp-ring"></span>
+            <small>Receitas</small>
+            <strong id="incomeValue">R$ 0,00</strong>
+            <em id="incomeCount">0 entradas</em>
+          </article>
+
+          <article class="stamp stamp-expense">
+            <span class="stamp-ring"></span>
+            <small>Despesas</small>
+            <strong id="expenseValue">R$ 0,00</strong>
+            <em id="expenseCount">0 saídas</em>
+          </article>
+        </div>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Comparativo mensal</span>
+              <h2>Em relação ao mês anterior</h2>
+            </div>
+            <span class="comparison-badge" id="comparisonBadge">—</span>
+          </div>
+          <div class="comparison-grid">
+            <div>
+              <span>Despesas</span>
+              <strong id="expenseComparison">—</strong>
+            </div>
+            <div>
+              <span>Receitas</span>
+              <strong id="incomeComparison">—</strong>
+            </div>
+            <div>
+              <span>Saldo</span>
+              <strong id="balanceComparison">—</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Orçamento mensal</span>
+              <h2>Controle do limite</h2>
+            </div>
+            <button class="text-action" id="editBudgetBtn" type="button">definir</button>
+          </div>
+
+          <div class="budget-amounts">
+            <span id="budgetSpent">R$ 0,00 gastos</span>
+            <strong id="budgetLimit">Sem limite</strong>
+          </div>
+
+          <div class="budget-track" aria-label="Uso do orçamento">
+            <span id="budgetBar" style="width:0%"></span>
+          </div>
+
+          <div class="budget-foot">
+            <span id="budgetPercent">0% utilizado</span>
+            <span id="budgetRemaining">Defina um orçamento mensal</span>
+          </div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Calendário</span>
+              <h2>Movimentações do mês</h2>
+            </div>
+            <span class="legend-mini"><i class="dot income-dot"></i> receita <i class="dot expense-dot"></i> despesa</span>
+          </div>
+
+          <div class="calendar" id="calendar">
+            <div class="calendar-weekdays">
+              <span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span><span>DOM</span>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+          </div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Categorias</span>
+              <h2>Despesas do mês</h2>
+            </div>
+          </div>
+          <div id="categoryBreakdown" class="category-breakdown"></div>
+        </section>
+
+        <button class="primary-paper-button" type="button" data-open-entry>
+          <span>＋</span> Novo lançamento
+        </button>
+
+        <div class="paper-footer-note">Etapa 3 · pesquisa, gráficos e análise</div>
       </section>
 
-      <div class="section-title">Despesas por categoria</div>
-      <div class="panel chart-wrap"><div class="donut" id="donut"><div class="donut-center">Total<b id="donutTotal">R$ 0</b></div></div><div class="legend" id="legend"></div></div>
+      <!-- LIVRO -->
+      <section class="paper-page" id="view-ledger" data-view="ledger">
+        <div class="paper-grain" aria-hidden="true"></div>
 
-      <div class="section-title">Lançamentos do mês</div>
-      <div class="filters"><input id="search" type="search" placeholder="Buscar descrição ou categoria"><select id="filterType"><option value="all">Todos</option><option value="expense">Despesas</option><option value="income">Receitas</option></select></div>
-      <div class="panel tx-list" id="entries"></div>
-    </div>
-  </main>
+        <div class="page-heading row-heading">
+          <div>
+            <span class="eyebrow">Livro de registros</span>
+            <h2>Lançamentos</h2>
+            <p id="ledgerMonthLabel">—</p>
+          </div>
+          <button class="round-add" type="button" data-open-entry aria-label="Novo lançamento">＋</button>
+        </div>
 
-  <div class="actions">
-    <button id="exportCsv" type="button">Excel / CSV do mês</button>
-    <button id="printPdf" type="button">PDF / Imprimir</button>
-    <button id="exportBackup" type="button">↓ Exportar backup</button>
-    <button id="importBackup" type="button">↑ Importar backup</button>
-    <input type="file" id="backupFile" accept="application/json,.json" hidden>
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Pesquisar descrição, categoria ou observação">
+          <button id="clearSearchBtn" type="button" aria-label="Limpar pesquisa" hidden>×</button>
+        </div>
+
+        <div class="filters-panel">
+          <div class="type-tabs" role="tablist">
+            <button type="button" class="type-tab active" data-filter="all">Todos</button>
+            <button type="button" class="type-tab" data-filter="expense">Despesas</button>
+            <button type="button" class="type-tab" data-filter="income">Receitas</button>
+          </div>
+
+          <div class="filter-row">
+            <label>
+              <span>Categoria</span>
+              <select id="categoryFilter"><option value="all">Todas</option></select>
+            </label>
+            <label>
+              <span>Ordenar</span>
+              <select id="sortFilter">
+                <option value="date-desc">Mais recentes</option>
+                <option value="date-asc">Mais antigos</option>
+                <option value="value-desc">Maior valor</option>
+                <option value="value-asc">Menor valor</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="active-filter-note" id="activeFilterNote" hidden>
+            <span id="activeFilterText"></span>
+            <button id="clearDayFilterBtn" type="button">limpar</button>
+          </div>
+        </div>
+
+        <div class="ledger-results-meta">
+          <span id="resultsCount">0 lançamentos</span>
+          <strong id="resultsTotal">R$ 0,00</strong>
+        </div>
+
+        <div class="transaction-list" id="transactionList"></div>
+      </section>
+
+      <!-- ANÁLISE -->
+      <section class="paper-page" id="view-stats" data-view="stats">
+        <div class="paper-grain" aria-hidden="true"></div>
+
+        <div class="page-heading">
+          <span class="eyebrow">Análise</span>
+          <h2>Resumo financeiro</h2>
+          <p>Indicadores e histórico calculados diretamente dos seus lançamentos.</p>
+        </div>
+
+        <div class="stats-preview">
+          <div class="mini-stat">
+            <span>Maior despesa</span>
+            <strong id="largestExpense">—</strong>
+            <small id="largestExpenseDesc">sem registros</small>
+          </div>
+          <div class="mini-stat">
+            <span>Média diária</span>
+            <strong id="dailyAverage">R$ 0,00</strong>
+            <small>despesas ÷ dias do mês</small>
+          </div>
+          <div class="mini-stat">
+            <span>Média semanal</span>
+            <strong id="weeklyAverage">R$ 0,00</strong>
+            <small>estimativa em 4,345 semanas</small>
+          </div>
+          <div class="mini-stat">
+            <span>Taxa de economia</span>
+            <strong id="savingsRate">—</strong>
+            <small id="savingsRateNote">sem receitas</small>
+          </div>
+          <div class="mini-stat">
+            <span>Categoria dominante</span>
+            <strong id="dominantCategory">—</strong>
+            <small id="dominantCategoryValue">sem despesas</small>
+          </div>
+          <div class="mini-stat">
+            <span>Saldo do mês</span>
+            <strong id="statsBalance">R$ 0,00</strong>
+            <small>receitas − despesas</small>
+          </div>
+        </div>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Últimos 6 meses</span>
+              <h2>Despesas mensais</h2>
+            </div>
+          </div>
+          <div class="history-chart" id="expenseHistoryChart"></div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Distribuição</span>
+              <h2>Despesas por categoria</h2>
+            </div>
+          </div>
+          <div class="category-analysis">
+            <div class="donut-wrap">
+              <div class="donut-chart" id="categoryDonut">
+                <div class="donut-center">
+                  <span>Total</span>
+                  <strong id="donutTotal">R$ 0</strong>
+                </div>
+              </div>
+            </div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </section>
+
+        <section class="ledger-card">
+          <div class="ledger-heading">
+            <div>
+              <span class="eyebrow">Movimentação</span>
+              <h2>Dias com maior despesa</h2>
+            </div>
+          </div>
+          <div class="top-days" id="topExpenseDays"></div>
+        </section>
+      </section>
+
+      <!-- AJUSTES -->
+      <section class="paper-page" id="view-settings" data-view="settings">
+        <div class="paper-grain" aria-hidden="true"></div>
+
+        <div class="page-heading">
+          <span class="eyebrow">Preferências</span>
+          <h2>Configurações</h2>
+          <p>Categorias e orçamento continuam totalmente locais no aparelho.</p>
+        </div>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Categorias</span>
+              <h3>Organização dos lançamentos</h3>
+            </div>
+          </div>
+
+          <form id="categoryForm" class="inline-form">
+            <input id="newCategoryInput" maxlength="30" type="text" placeholder="Nova categoria">
+            <button type="submit">Adicionar</button>
+          </form>
+
+          <div class="category-chips" id="categoryChips"></div>
+          <p class="micro-note">Categorias em uso não são apagadas automaticamente dos lançamentos existentes.</p>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Orçamento</span>
+              <h3>Limite do mês atual</h3>
+            </div>
+          </div>
+
+          <form id="budgetForm" class="budget-form">
+            <label>
+              <span>Valor máximo de despesas</span>
+              <div class="money-input">
+                <span>R$</span>
+                <input id="budgetInput" inputmode="decimal" type="number" min="0" step="0.01" placeholder="0,00">
+              </div>
+            </label>
+            <button type="submit" class="secondary-paper-button">Salvar orçamento</button>
+          </form>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Segurança dos dados</span>
+              <h3>Backup e restauração</h3>
+            </div>
+          </div>
+
+          <div class="settings-actions-grid">
+            <button type="button" class="tool-button" id="exportBackupBtn">
+              <b>↓</b>
+              <span>Exportar backup<small>Arquivo JSON completo</small></span>
+            </button>
+
+            <button type="button" class="tool-button" id="importBackupBtn">
+              <b>↑</b>
+              <span>Importar backup<small>Restaurar arquivo JSON</small></span>
+            </button>
+          </div>
+
+          <input type="file" id="backupFileInput" accept=".json,application/json" hidden>
+          <p class="micro-note" id="lastBackupNote">Nenhum backup exportado neste aparelho ainda.</p>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Relatórios</span>
+              <h3>Exportar seus registros</h3>
+            </div>
+          </div>
+
+          <div class="settings-actions-grid">
+            <button type="button" class="tool-button" id="exportCsvBtn">
+              <b>▦</b>
+              <span>Excel / CSV<small>Todos os meses</small></span>
+            </button>
+
+            <button type="button" class="tool-button" id="printPdfBtn">
+              <b>▤</b>
+              <span>PDF / imprimir<small>Mês selecionado</small></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Aplicativo</span>
+              <h3>PWA e compartilhamento</h3>
+            </div>
+          </div>
+
+          <div class="app-status-card">
+            <div>
+              <span>Status</span>
+              <strong id="pwaStatus">Verificando…</strong>
+            </div>
+            <i id="connectionDot" class="status-dot"></i>
+          </div>
+
+          <div class="settings-actions-grid">
+            <button type="button" class="tool-button" id="shareAppBtn">
+              <b>↗</b>
+              <span>Compartilhar app<small>Enviar o link para outra pessoa</small></span>
+            </button>
+
+            <button type="button" class="tool-button" id="refreshAppBtn">
+              <b>↻</b>
+              <span>Atualizar app<small>Buscar versão mais recente</small></span>
+            </button>
+          </div>
+
+          <p class="micro-note">
+            No iPhone, abra pelo Safari e use <b>Compartilhar → Adicionar à Tela de Início</b>.
+            Cada usuário mantém seus próprios dados neste navegador.
+          </p>
+        </section>
+
+        <section class="settings-section about-section">
+          <span class="eyebrow">Sobre</span>
+          <h3>Livro Caixa · Versão 3.0</h3>
+          <p>Controle financeiro pessoal com armazenamento local, funcionamento offline e sem necessidade de conta.</p>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegação principal">
+      <button class="nav-item active" type="button" data-target="home">
+        <span class="nav-icon">⌂</span>
+        <span>Início</span>
+      </button>
+      <button class="nav-item" type="button" data-target="ledger">
+        <span class="nav-icon">▤</span>
+        <span>Livro</span>
+      </button>
+      <button class="nav-item" type="button" data-target="stats">
+        <span class="nav-icon">⌁</span>
+        <span>Análise</span>
+      </button>
+      <button class="nav-item" type="button" data-target="settings">
+        <span class="nav-icon">⚙</span>
+        <span>Ajustes</span>
+      </button>
+    </nav>
   </div>
-  <div class="hint">Os dados ficam neste navegador e não são enviados para o GitHub. Faça backup periodicamente. Ao trocar de aparelho, importe o arquivo JSON para recuperar seus dados.</div>
-</div>
-<div class="toast" id="toast"></div>
-<script>
-(() => {
-'use strict';
-const PREFIX='livroCaixa:v2:';
-const MONTHS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-const COLORS=['#2f6f4e','#b8933f','#41688b','#a65e2e','#7c5aa6','#a6342a','#548f8b','#8a6d3b','#6c7a89','#a56b83'];
-const DEFAULT_CATEGORIES=['Moradia','Alimentação','Transporte','Lazer','Saúde','Educação','Contas','Compras','Salário','Outros'];
-let cursor=new Date(); cursor=new Date(cursor.getFullYear(),cursor.getMonth(),1);
-let currentType='expense'; let installPrompt=null;
-const $=id=>document.getElementById(id);
-const monthKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-const currentKey=()=>monthKey(cursor);
-const brl=n=>(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),1800)}
-function read(k,fallback){try{const v=localStorage.getItem(k);return v===null?fallback:JSON.parse(v)}catch{return fallback}}
-function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{toast('Não foi possível salvar.');return false}}
-function entriesKey(m=currentKey()){return PREFIX+'entries:'+m} function budgetKey(m=currentKey()){return PREFIX+'budget:'+m}
-function getEntries(m=currentKey()){return read(entriesKey(m),[])} function setEntries(a,m=currentKey()){return write(entriesKey(m),a)}
-function categories(){return read(PREFIX+'categories',DEFAULT_CATEGORIES)}
-function saveCategories(a){write(PREFIX+'categories',a)}
-function migrateOldData(){
-  if(localStorage.getItem(PREFIX+'migrationDone')) return;
-  try{
-    const oldCats=read('categories',null); if(Array.isArray(oldCats)&&oldCats.length) saveCategories([...new Set([...DEFAULT_CATEGORIES,...oldCats])]);
-    const keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('expenses:'))keys.push(k)}
-    keys.forEach(k=>{const m=k.slice(9), old=read(k,[]);if(!Array.isArray(old)||!old.length)return;const existing=getEntries(m);const ids=new Set(existing.map(e=>e.id));old.forEach(e=>{if(!ids.has(e.id))existing.push({id:e.id||crypto.randomUUID(),type:'expense',value:Number(e.value)||0,desc:e.desc||'Gasto',category:e.category||'Outros',date:e.date||`${m}-01`})});setEntries(existing,m)});
-    localStorage.setItem(PREFIX+'migrationDone','1');
-  }catch(e){console.warn('Migração:',e)}
-}
-function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(PREFIX+'theme',theme);$('themeColorMeta').content=theme==='dark'?'#11100f':'#241a15'}
-function initTheme(){let t=localStorage.getItem(PREFIX+'theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';applyTheme(t)}
-function setType(type){currentType=type;document.querySelectorAll('.type-switch button').forEach(b=>b.classList.toggle('active',b.dataset.type===type))}
-function renderCategorySelect(){const cats=categories();$('category').innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
-function render(){
-  const m=currentKey(), list=getEntries(m); $('monthLabel').textContent=`${MONTHS[cursor.getMonth()]} · ${cursor.getFullYear()}`;
-  const income=list.filter(e=>e.type==='income').reduce((s,e)=>s+Number(e.value),0); const expense=list.filter(e=>e.type!=='income').reduce((s,e)=>s+Number(e.value),0); const balance=income-expense;
-  $('incomeTotal').textContent=brl(income);$('expenseTotal').textContent=brl(expense);$('balanceTotal').textContent=brl(balance);$('balanceTotal').className='v '+(balance<0?'negative':'positive');$('entryCount').textContent=list.length;
-  const budget=Number(read(budgetKey(),0))||0;$('budgetInput').value=budget||'';const p=budget?expense/budget*100:0;$('budgetProgress').querySelector('span').style.width=`${Math.min(p,100)}%`;$('budgetProgress').classList.toggle('over',budget>0&&expense>budget);
-  $('budgetStatus').textContent=budget?`${brl(expense)} de ${brl(budget)} · ${p.toFixed(0)}% usado`:'Sem limite definido';
-  renderChart(list);renderEntries(list);
-}
-function renderChart(list){
-  const map={};list.filter(e=>e.type!=='income').forEach(e=>map[e.category]=(map[e.category]||0)+Number(e.value));const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);const total=arr.reduce((s,x)=>s+x[1],0);$('donutTotal').textContent=brl(total);
-  if(!total){$('donut').style.background='conic-gradient(var(--line) 0 100%)';$('legend').innerHTML='<div class="empty">Nenhuma despesa neste mês.</div>';return}
-  let acc=0;const stops=[];arr.forEach(([_,v],i)=>{const start=acc;acc+=v/total*100;stops.push(`${COLORS[i%COLORS.length]} ${start}% ${acc}%`)});$('donut').style.background=`conic-gradient(${stops.join(',')})`;
-  $('legend').innerHTML=arr.slice(0,8).map(([c,v],i)=>`<div class="legend-row"><span class="legend-dot" style="background:${COLORS[i%COLORS.length]}"></span><span>${esc(c)}</span><span>${brl(v)}</span></div>`).join('');
-}
-function renderEntries(list){
-  const q=$('search').value.trim().toLowerCase(),ft=$('filterType').value;let data=list.filter(e=>(ft==='all'||e.type===ft)&&(!q||(`${e.desc} ${e.category}`).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||String(b.id).localeCompare(String(a.id)));
-  if(!data.length){$('entries').innerHTML='<div class="empty">Nenhum lançamento encontrado.</div>';return}
-  $('entries').innerHTML=data.map(e=>`<div class="tx"><div class="tx-date">${esc(e.date.slice(8,10))}/${esc(e.date.slice(5,7))}</div><div><div class="tx-desc">${esc(e.desc)}</div><div class="tx-meta">${esc(e.category)} · ${e.type==='income'?'receita':'despesa'}</div></div><div class="tx-val ${e.type==='income'?'positive':'negative'}">${e.type==='income'?'+':'−'} ${brl(e.value)}</div><button class="delete" data-id="${esc(e.id)}" aria-label="Excluir">×</button></div>`).join('')
-}
-$('entryForm').addEventListener('submit',ev=>{ev.preventDefault();const value=Number($('value').value),desc=$('description').value.trim(),date=$('date').value,category=$('category').value;if(!(value>0)||!desc||!date)return;const m=date.slice(0,7),a=getEntries(m);a.push({id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()),type:currentType,value,desc,category,date});if(setEntries(a,m)){toast('Lançamento salvo.');$('value').value='';$('description').value='';if(m===currentKey())render()}});
-document.querySelectorAll('.type-switch button').forEach(b=>b.addEventListener('click',()=>setType(b.dataset.type)));
-$('addCategory').addEventListener('click',()=>{const v=$('newCategory').value.trim();if(!v)return;const a=categories();if(!a.some(c=>c.toLowerCase()===v.toLowerCase())){a.push(v);saveCategories(a);renderCategorySelect();$('category').value=v;toast('Categoria adicionada.')} $('newCategory').value='' });
-$('entries').addEventListener('click',ev=>{const b=ev.target.closest('.delete');if(!b)return;const a=getEntries().filter(e=>String(e.id)!==b.dataset.id);setEntries(a);render();toast('Lançamento excluído.')});
-$('prevMonth').addEventListener('click',()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);render()});$('nextMonth').addEventListener('click',()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()});
-$('saveBudget').addEventListener('click',()=>{const v=Math.max(0,Number($('budgetInput').value)||0);write(budgetKey(),v);render();toast(v?'Orçamento salvo.':'Orçamento removido.')});
-$('search').addEventListener('input',()=>renderEntries(getEntries()));$('filterType').addEventListener('change',()=>renderEntries(getEntries()));
-$('themeBtn').addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
-function csvEscape(v){return `"${String(v??'').replace(/"/g,'""')}"`}
-$('exportCsv').addEventListener('click',()=>{const a=getEntries().sort((x,y)=>x.date.localeCompare(y.date));if(!a.length)return toast('Não há dados neste mês.');const rows=[['Data','Tipo','Descrição','Categoria','Valor'],...a.map(e=>[e.date,e.type==='income'?'Receita':'Despesa',e.desc,e.category,Number(e.value).toFixed(2).replace('.',',')])];const csv='\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\r\n');downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`livro-caixa-${currentKey()}.csv`);toast('Arquivo CSV gerado.')});
-$('printPdf').addEventListener('click',()=>window.print());
-function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-$('exportBackup').addEventListener('click',()=>{const data={app:'Livro-Caixa',version:2,exportedAt:new Date().toISOString(),storage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith(PREFIX)||k==='categories'||k.startsWith('expenses:')))data.storage[k]=localStorage.getItem(k);}downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),`backup-livro-caixa-${today()}.json`);toast('Backup exportado.');});
-$('importBackup').addEventListener('click',()=>$('backupFile').click());$('backupFile').addEventListener('change',ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);const storage=d.storage||d;let count=0;Object.entries(storage).forEach(([k,v])=>{if(k.startsWith(PREFIX)||k==='categories'||k.startsWith('expenses:')){localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));count++}});if(!count)throw new Error();localStorage.removeItem(PREFIX+'migrationDone');migrateOldData();renderCategorySelect();render();toast('Backup importado.')}catch{toast('Backup inválido.')} };r.readAsText(f);ev.target.value=''});
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').hidden=false;$('installBanner').style.display='block'});$('installBtn').addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').hidden=true});
-function showInstallHint(){const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;if(!standalone&&/iPhone|iPad|iPod/i.test(navigator.userAgent))$('installBanner').style.display='block'}
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(console.warn));
-initTheme();migrateOldData();renderCategorySelect();$('date').value=today();showInstallHint();render();
-})();
-</script>
+
+  <!-- MODAL LANÇAMENTO -->
+  <div class="modal-backdrop" id="entryModal" hidden>
+    <section class="paper-modal" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
+      <button type="button" class="modal-close" data-close-modal aria-label="Fechar">×</button>
+
+      <div class="modal-heading">
+        <span class="eyebrow">Registro no livro</span>
+        <h2 id="entryModalTitle">Novo lançamento</h2>
+      </div>
+
+      <form id="entryForm">
+        <input type="hidden" id="entryId">
+
+        <div class="segmented">
+          <button type="button" class="segment active expense-segment" data-type="expense">Despesa</button>
+          <button type="button" class="segment income-segment" data-type="income">Receita</button>
+        </div>
+        <input type="hidden" id="entryType" value="expense">
+
+        <label class="form-field">
+          <span>Descrição</span>
+          <input id="entryDescription" maxlength="80" type="text" placeholder="Ex.: Mercado" required>
+        </label>
+
+        <div class="form-grid">
+          <label class="form-field">
+            <span>Valor</span>
+            <div class="money-input">
+              <span>R$</span>
+              <input id="entryValue" inputmode="decimal" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+            </div>
+          </label>
+
+          <label class="form-field">
+            <span>Data</span>
+            <input id="entryDate" type="date" required>
+          </label>
+        </div>
+
+        <label class="form-field">
+          <span>Categoria</span>
+          <select id="entryCategory" required></select>
+        </label>
+
+        <label class="form-field">
+          <span>Observação <em>opcional</em></span>
+          <textarea id="entryNote" maxlength="160" rows="3" placeholder="Alguma informação adicional"></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button class="danger-text-button" type="button" id="deleteEntryBtn" hidden>Excluir</button>
+          <button class="primary-paper-button compact" type="submit">Carimbar lançamento</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- MODAL ORÇAMENTO -->
+  <div class="modal-backdrop" id="budgetModal" hidden>
+    <section class="paper-modal small-modal" role="dialog" aria-modal="true" aria-labelledby="budgetModalTitle">
+      <button type="button" class="modal-close" data-close-budget aria-label="Fechar">×</button>
+      <div class="modal-heading">
+        <span class="eyebrow">Controle do limite</span>
+        <h2 id="budgetModalTitle">Orçamento mensal</h2>
+      </div>
+      <form id="budgetModalForm">
+        <label class="form-field">
+          <span>Limite de despesas para <b id="budgetModalMonth">este mês</b></span>
+          <div class="money-input large-money">
+            <span>R$</span>
+            <input id="budgetModalInput" inputmode="decimal" type="number" min="0" step="0.01" placeholder="0,00">
+          </div>
+        </label>
+        <button type="submit" class="primary-paper-button compact">Salvar limite</button>
+      </form>
+    </section>
+  </div>
+
+
+  <!-- RELATÓRIO -->
+  <div class="modal-backdrop" id="reportModal" hidden>
+    <section class="paper-modal report-modal" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+      <button type="button" class="modal-close" data-close-report aria-label="Fechar">×</button>
+      <div class="modal-heading">
+        <span class="eyebrow">Relatório mensal</span>
+        <h2 id="reportModalTitle">Resumo para impressão</h2>
+      </div>
+      <div id="reportPreview" class="report-preview"></div>
+      <div class="modal-actions">
+        <button type="button" class="secondary-paper-button" id="closeReportBtn">Fechar</button>
+        <button type="button" class="primary-paper-button compact" id="printReportBtn">Imprimir / Salvar PDF</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="js/app.js"></script>
 </body>
 </html>
