@@ -1,4 +1,4 @@
-# Livro Caixa — V3.0.1
+# Livro Caixa — V3.0.2
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
@@ -29,4 +29,10 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-O service worker usa o cache `livro-caixa-v3-final-3.0.1`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+O service worker usa o cache `livro-caixa-v3-final-3.0.2`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+
+
+## Correção 3.0.2
+- compartilhamento usa o endereço oficial do GitHub Pages;
+- link é incluído também no texto compartilhado;
+- fallback copia o endereço quando o compartilhamento nativo não estiver disponível.

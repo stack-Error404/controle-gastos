@@ -984,23 +984,39 @@ function closeReport(){
 }
 
 async function shareApp(){
-  const data = {
-    title:"Livro Caixa",
-    text:"Livro Caixa — controle financeiro pessoal",
-    url:location.href
-  };
+  const APP_URL = "https://stack-error404.github.io/controle-gastos/";
+  const shareText = `Livro Caixa — controle financeiro pessoal\n${APP_URL}`;
 
   try{
     if(navigator.share){
-      await navigator.share(data);
-    }else if(navigator.clipboard && location.protocol.startsWith("http")){
-      await navigator.clipboard.writeText(location.href);
-      showToast("Link copiado.");
-    }else{
-      prompt("Copie o endereço do aplicativo:", location.href);
+      await navigator.share({
+        title: "Livro Caixa",
+        text: shareText,
+        url: APP_URL
+      });
+      return;
     }
+
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(APP_URL);
+      showToast("Link do app copiado.");
+      return;
+    }
+
+    prompt("Copie o endereço do aplicativo:", APP_URL);
   }catch(err){
-    if(err && err.name!=="AbortError") showToast("Não foi possível compartilhar.");
+    if(err && err.name === "AbortError") return;
+
+    try{
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(APP_URL);
+        showToast("Link do app copiado.");
+      }else{
+        prompt("Copie o endereço do aplicativo:", APP_URL);
+      }
+    }catch{
+      prompt("Copie o endereço do aplicativo:", APP_URL);
+    }
   }
 }
 
