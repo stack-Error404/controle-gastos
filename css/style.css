@@ -34,6 +34,8 @@ body{
   font-family:Georgia,"Times New Roman",serif;
   padding:max(18px,env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
 }
+
+body{zoom:var(--text-zoom,1)}
 body.modal-open{overflow:hidden}
 body::before{
   content:"";position:fixed;inset:0;pointer-events:none;opacity:.19;
@@ -274,7 +276,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .type-tab.active{
   border-color:rgba(47,111,78,.45);color:var(--green);background:rgba(47,111,78,.07);
 }
-.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.filter-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .filter-row label>span{
   display:block;font-family:Arial,sans-serif;font-size:7px;text-transform:uppercase;
   letter-spacing:.07em;color:var(--ink-soft);margin:0 0 4px 2px;
@@ -797,3 +799,14 @@ body.dark .report-preview{background:rgba(255,255,255,.02)}
 .empty-planning{padding:18px 6px;text-align:center;color:var(--ink-soft);font-style:italic}
 .dark .credit-card-item{background:linear-gradient(135deg,#5a4032,#241914)}
 @media(max-width:520px){.bottom-nav{grid-template-columns:repeat(5,1fr)}.nav-item{font-size:.62rem}.planning-item{grid-template-columns:auto 1fr}.planning-actions{grid-column:2}.planning-value{grid-column:2}}
+
+/* Avisos e acessibilidade · v3.2 */
+.pinned-notice{position:relative;border:1px solid rgba(184,147,63,.45);background:linear-gradient(135deg,rgba(184,147,63,.10),rgba(255,255,255,.03))}
+.notice-pin{position:absolute;right:14px;top:13px;border-radius:999px;padding:4px 8px;background:var(--red);color:#fff;font:700 8px Arial,sans-serif;letter-spacing:.09em}
+.pinned-notice details{border-top:1px dashed var(--line);padding:11px 0}.pinned-notice details:last-child{padding-bottom:0}
+.pinned-notice summary{cursor:pointer;font-family:var(--serif);font-weight:700;color:var(--ink)}
+.pinned-notice ol{margin:10px 0 0 20px;padding:0;color:var(--ink-soft);font-size:.82rem;line-height:1.65}
+.zoom-control{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin-top:15px}
+.zoom-control button{min-height:44px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.08);color:var(--ink);font-family:var(--serif);font-size:1.1rem;font-weight:700;cursor:pointer}
+.zoom-control button:disabled{opacity:.35;cursor:default}.zoom-control strong{min-width:54px;text-align:center;font-family:"Courier New",monospace;color:var(--green)}
+.zoom-reset{display:block;margin:10px auto 0}.dark .pinned-notice{background:rgba(184,147,63,.06)}

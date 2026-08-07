@@ -17,14 +17,17 @@ const KEYS = {
   budgetPrefix: "lc:v3:budget:",
   lastBackup: "lc:v3:lastBackup",
   cards: "lc:v3:cards",
-  recurring: "lc:v3:recurring"
+  recurring: "lc:v3:recurring",
+  textZoom: "lc:v3:textZoom"
 };
+const PAYMENT_LABELS={cash:"Dinheiro",pix:"Pix",debit:"Cartão de débito",credit:"Cartão de crédito",crypto:"Criptomoeda",unspecified:"Não informado"};
 
 let categories = [];
 let currentDate = new Date();
 let entries = [];
 let ledgerFilter = "all";
 let ledgerCategory = "all";
+let ledgerPayment = "all";
 let ledgerSort = "date-desc";
 let ledgerSearch = "";
 let ledgerDayFilter = null;
@@ -115,7 +118,7 @@ function materializeRecurringMonth(monthKey){
   recurringRules.filter(r=>r.active!==false && monthKey>=r.startDate.slice(0,7)).forEach(rule=>{
     if(monthEntries.some(e=>e.recurringId===rule.id)) return;
     const day=Math.min(Number(rule.day)||1,new Date(year,month,0).getDate());
-    monthEntries.push({id:uid("rec"),type:rule.type,description:rule.description,value:Number(rule.value),category:rule.category,date:`${monthKey}-${String(day).padStart(2,"0")}`,note:rule.note||"",cardId:rule.cardId||"",recurringId:rule.id,createdAt:Date.now()});
+    monthEntries.push({id:uid("rec"),type:rule.type,description:rule.description,value:Number(rule.value),category:rule.category,date:`${monthKey}-${String(day).padStart(2,"0")}`,note:rule.note||"",paymentMethod:rule.paymentMethod||(rule.cardId?"credit":"unspecified"),cardId:rule.cardId||"",recurringId:rule.id,createdAt:Date.now()});
     changed=true;
   });
   if(changed) localStorage.setItem(key,JSON.stringify(monthEntries));
@@ -248,11 +251,11 @@ function renderSummary(){
     const rate = ((t.income-t.expense)/t.income)*100;
     $("savingsRate").textContent = `${Math.round(rate)}%`;
     $("savingsRate").style.color = rate >= 0 ? "var(--green)" : "var(--red)";
-    $("savingsRateNote").textContent = rate >= 0 ? "percentual preservado da renda" : "despesas acima das receitas";
+    $("savingsRateNote").textContent = rate >= 0 ? "percentual preservado dos proventos" : "despesas acima dos proventos";
   }else{
     $("savingsRate").textContent = "—";
     $("savingsRate").style.color = "";
-    $("savingsRateNote").textContent = "sem receitas";
+    $("savingsRateNote").textContent = "sem proventos";
   }
 
   const byCategory = {};
@@ -419,6 +422,7 @@ function filteredTransactions(){
 
   if(ledgerFilter!=="all") filtered = filtered.filter(e=>e.type===ledgerFilter);
   if(ledgerCategory!=="all") filtered = filtered.filter(e=>e.category===ledgerCategory);
+  if(ledgerPayment!=="all") filtered = filtered.filter(e=>(e.paymentMethod||(e.cardId?"credit":"unspecified"))===ledgerPayment);
   if(ledgerDayFilter) filtered = filtered.filter(e=>e.date===ledgerDayFilter);
 
   if(ledgerSearch.trim()){
@@ -472,12 +476,13 @@ function renderTransactions(){
     const monthShort = MONTHS_SHORT[Number(m)-1];
     const sign = e.type==="expense"?"−":"+";
     const card = cards.find(c=>c.id===e.cardId);
+    const payment=e.paymentMethod||(e.cardId?"credit":"unspecified");
     return `
       <article class="tx" data-entry-id="${escapeHtml(e.id)}">
         <div class="tx-date"><strong>${d}</strong>${monthShort}</div>
         <div class="tx-info">
           <span class="tx-title">${escapeHtml(e.description)}</span>
-          <span class="tx-meta">${escapeHtml(e.category)}${card?` · ${escapeHtml(card.name)}`:""}${e.recurringId?" · fixo":""}${e.note?" · com observação":""}</span>
+          <span class="tx-meta">${escapeHtml(e.category)} · ${PAYMENT_LABELS[payment]||"Não informado"}${card?` · ${escapeHtml(card.name)}`:""}${e.recurringId?` · ${e.type==="income"?"provento fixo":"despesa fixa"}`:""}${e.note?" · com observação":""}</span>
         </div>
         <span class="tx-value ${e.type}">${sign} ${formatBRL(e.value)}</span>
       </article>`;
@@ -506,7 +511,7 @@ function renderCategoryControls(){
 
   const cardSelect=$("entryCard");
   const selected=cardSelect.value;
-  cardSelect.innerHTML='<option value="">Conta / dinheiro</option>'+cards.map(c=>`<option value="${escapeHtml(c.id)}">Cartão · ${escapeHtml(c.name)}</option>`).join("");
+  cardSelect.innerHTML='<option value="">Selecione um cartão</option>'+cards.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join("");
   if(cards.some(c=>c.id===selected)) cardSelect.value=selected;
 }
 
@@ -531,12 +536,12 @@ function renderPlanning(){
 
   const recurringTarget=$("recurringList");
   const activeRules=recurringRules.filter(r=>r.active!==false);
-  recurringTarget.innerHTML=activeRules.length?activeRules.map(rule=>`<article class="planning-item"><span class="planning-date"><strong>${String(rule.day).padStart(2,"0")}</strong>todo mês</span><span class="planning-copy"><strong>${escapeHtml(rule.description)}</strong><small>${escapeHtml(rule.category)} · <span class="recurring-badge">fixo</span></small></span><strong class="planning-value">${rule.type==="income"?"+":"−"} ${formatBRL(rule.value)}</strong><span class="planning-actions"><button class="mini-action" type="button" data-stop-recurring="${escapeHtml(rule.id)}">cancelar recorrência</button></span></article>`).join(""):'<div class="empty-planning">Nenhum lançamento fixo ativo.</div>';
+  recurringTarget.innerHTML=activeRules.length?activeRules.map(rule=>`<article class="planning-item"><span class="planning-date"><strong>${String(rule.day).padStart(2,"0")}</strong>todo mês</span><span class="planning-copy"><strong>${escapeHtml(rule.description)}</strong><small>${escapeHtml(rule.category)} · ${PAYMENT_LABELS[rule.paymentMethod||(rule.cardId?"credit":"unspecified")]} · <span class="recurring-badge">${rule.type==="income"?"provento fixo":"despesa fixa"}</span></small></span><strong class="planning-value">${rule.type==="income"?"+":"−"} ${formatBRL(rule.value)}</strong><span class="planning-actions"><button class="mini-action" type="button" data-stop-recurring="${escapeHtml(rule.id)}">cancelar recorrência</button></span></article>`).join(""):'<div class="empty-planning">Nenhum lançamento fixo ativo.</div>';
 
   const currentKey=getMonthKey();
   const future=allStoredEntries().filter(e=>e.date&&e.date.slice(0,7)>currentKey).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,30);
   const futureTarget=$("futureList");
-  futureTarget.innerHTML=future.length?future.map(e=>{const [y,m,d]=e.date.split("-");return `<article class="planning-item"><span class="planning-date"><strong>${d}</strong>${MONTHS_SHORT[Number(m)-1]} ${y}</span><span class="planning-copy"><strong>${escapeHtml(e.description)}</strong><small>${escapeHtml(e.category)} · <span class="future-badge">futuro</span></small></span><strong class="planning-value">${e.type==="income"?"+":"−"} ${formatBRL(e.value)}</strong></article>`}).join(""):'<div class="empty-planning">Nenhum lançamento futuro cadastrado.</div>';
+  futureTarget.innerHTML=future.length?future.map(e=>{const [y,m,d]=e.date.split("-");const payment=e.paymentMethod||(e.cardId?"credit":"unspecified");return `<article class="planning-item"><span class="planning-date"><strong>${d}</strong>${MONTHS_SHORT[Number(m)-1]} ${y}</span><span class="planning-copy"><strong>${escapeHtml(e.description)}</strong><small>${escapeHtml(e.category)} · ${PAYMENT_LABELS[payment]} · <span class="future-badge">futuro</span></small></span><strong class="planning-value">${e.type==="income"?"+":"−"} ${formatBRL(e.value)}</strong></article>`}).join(""):'<div class="empty-planning">Nenhum lançamento futuro cadastrado.</div>';
 }
 
 function openCardModal(card=null){
@@ -688,6 +693,13 @@ function setEntryType(type){
   document.querySelectorAll(".segment").forEach(btn=>{
     btn.classList.toggle("active",btn.dataset.type===type);
   });
+  $("recurringLabel").textContent=type==="income"?"Provento fixo mensal":"Despesa fixa mensal";
+}
+
+function updateCardField(){
+  const credit=$("entryPayment").value==="credit";
+  $("entryCardField").hidden=!credit;
+  if(!credit) $("entryCard").value="";
 }
 
 function openEntryModal(entry=null,defaultDate=null){
@@ -701,8 +713,12 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryValue").value = entry.value;
     $("entryDate").value = entry.date;
     $("entryNote").value = entry.note || "";
+    $("entryPayment").value = entry.paymentMethod || (entry.cardId ? "credit" : "cash");
     $("entryCard").value = entry.cardId || "";
+    updateCardField();
     $("entryRecurring").checked = false;
+    $("entryPayment").value = "cash";
+    updateCardField();
     $("recurringField").hidden = true;
     setEntryType(entry.type);
 
@@ -758,22 +774,24 @@ function saveEntryFromForm(event){
   const category = $("entryCategory").value;
   const note = $("entryNote").value.trim();
   const id = $("entryId").value;
-  const cardId = $("entryCard").value;
+  const paymentMethod = $("entryPayment").value;
+  const cardId = paymentMethod==="credit" ? $("entryCard").value : "";
   const makeRecurring = $("entryRecurring").checked && !id;
 
   if(!description || !date || !category || !Number.isFinite(value) || value<=0){
     showToast("Preencha os campos obrigatórios.");
     return;
   }
+  if(paymentMethod==="credit" && !cardId){ showToast("Selecione ou cadastre um cartão de crédito."); return; }
 
   const entryMonth = date.slice(0,7);
   const newEntry = {
     id:id || `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    type,description,value,category,date,note,cardId,createdAt:Date.now()
+    type,description,value,category,date,note,paymentMethod,cardId,createdAt:Date.now()
   };
 
   if(makeRecurring){
-    const rule={id:uid("rule"),type,description,value,category,note,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
+    const rule={id:uid("rule"),type,description,value,category,note,paymentMethod,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
     recurringRules.push(rule); saveRecurring(); newEntry.recurringId=rule.id;
   }
 
@@ -889,7 +907,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "3.1.0",
+    version: "3.2.0",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
@@ -990,16 +1008,17 @@ function exportCsv(){
   }
 
   const rows = [
-    ["Data","Mês","Tipo","Descrição","Categoria","Cartão","Valor","Observação"]
+    ["Data","Mês","Tipo","Descrição","Categoria","Forma de pagamento","Cartão","Valor","Observação"]
   ];
 
   all.forEach(e=>{
     rows.push([
       e.date,
       e.monthKey,
-      e.type==="income" ? "Receita" : "Despesa",
+      e.type==="income" ? "Provento" : "Despesa",
       e.description,
       e.category,
+      PAYMENT_LABELS[e.paymentMethod||(e.cardId?"credit":"unspecified")] || "Não informado",
       (cards.find(c=>c.id===e.cardId)||{}).name || "",
       Number(e.value||0).toFixed(2).replace(".",","),
       e.note || ""
@@ -1029,7 +1048,8 @@ function buildReportPreview(){
         <td>${d}/${m}/${y}</td>
         <td>${escapeHtml(e.description)}</td>
         <td>${escapeHtml(e.category)}</td>
-        <td>${e.type==="income"?"Receita":"Despesa"}</td>
+        <td>${e.type==="income"?"Provento":"Despesa"}</td>
+        <td>${PAYMENT_LABELS[e.paymentMethod||(e.cardId?"credit":"unspecified")]||"Não informado"}</td>
         <td>${e.type==="income"?"+":"−"} ${formatBRL(e.value)}</td>
       </tr>`;
   }).join("");
@@ -1041,7 +1061,7 @@ function buildReportPreview(){
     </div>
 
     <div class="report-summary">
-      <div><span>Receitas</span><strong>${formatBRL(t.income)}</strong></div>
+      <div><span>Proventos</span><strong>${formatBRL(t.income)}</strong></div>
       <div><span>Despesas</span><strong>${formatBRL(t.expense)}</strong></div>
       <div><span>Saldo</span><strong>${formatBRL(t.balance)}</strong></div>
     </div>
@@ -1051,7 +1071,7 @@ function buildReportPreview(){
       ? `<table class="report-table">
           <thead>
             <tr>
-              <th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th>
+              <th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Pagamento</th><th>Valor</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1135,6 +1155,24 @@ async function refreshApp(){
   setTimeout(()=>location.reload(),500);
 }
 
+function applyTextZoom(value,announce=false){
+  const allowed=[0.85,1,1.15,1.3];
+  const zoom=allowed.includes(Number(value))?Number(value):1;
+  document.body.style.setProperty("--text-zoom",String(zoom));
+  localStorage.setItem(KEYS.textZoom,String(zoom));
+  $("zoomValue").textContent=`${Math.round(zoom*100)}%`;
+  $("zoomOutBtn").disabled=zoom===allowed[0];
+  $("zoomInBtn").disabled=zoom===allowed[allowed.length-1];
+  if(announce) showToast(`Tamanho das letras: ${Math.round(zoom*100)}%.`);
+}
+
+function changeTextZoom(delta){
+  const allowed=[0.85,1,1.15,1.3];
+  const current=Number(localStorage.getItem(KEYS.textZoom)||1);
+  const idx=Math.max(0,allowed.indexOf(current));
+  applyTextZoom(allowed[Math.max(0,Math.min(allowed.length-1,idx+delta))],true);
+}
+
 /* Eventos das ferramentas finais */
 $("exportBackupBtn").addEventListener("click",exportBackup);
 
@@ -1162,6 +1200,10 @@ $("reportModal").addEventListener("click",e=>{
 
 $("shareAppBtn").addEventListener("click",shareApp);
 $("refreshAppBtn").addEventListener("click",refreshApp);
+$("entryPayment").addEventListener("change",updateCardField);
+$("zoomOutBtn").addEventListener("click",()=>changeTextZoom(-1));
+$("zoomInBtn").addEventListener("click",()=>changeTextZoom(1));
+$("zoomResetBtn").addEventListener("click",()=>applyTextZoom(1,true));
 
 $("addCardBtn").addEventListener("click",()=>openCardModal());
 document.querySelectorAll("[data-close-card]").forEach(btn=>btn.addEventListener("click",closeCardModal));
@@ -1200,6 +1242,7 @@ updatePwaStatus();
 /* Inicialização */
 loadPlanningData();
 loadCategories();
+applyTextZoom(Number(localStorage.getItem(KEYS.textZoom)||1));
 
 const storedMonth = localStorage.getItem(KEYS.month);
 if(storedMonth && /^\d{4}-\d{2}$/.test(storedMonth)){
@@ -1275,6 +1318,10 @@ $("clearSearchBtn").addEventListener("click",()=>{
 });
 $("categoryFilter").addEventListener("change",e=>{
   ledgerCategory = e.target.value;
+  renderTransactions();
+});
+$("paymentFilter").addEventListener("change",e=>{
+  ledgerPayment = e.target.value;
   renderTransactions();
 });
 $("sortFilter").addEventListener("change",e=>{

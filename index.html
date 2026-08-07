@@ -55,7 +55,7 @@
 
           <article class="stamp stamp-income">
             <span class="stamp-ring"></span>
-            <small>Receitas</small>
+            <small>Proventos</small>
             <strong id="incomeValue">R$ 0,00</strong>
             <em id="incomeCount">0 entradas</em>
           </article>
@@ -82,7 +82,7 @@
               <strong id="expenseComparison">—</strong>
             </div>
             <div>
-              <span>Receitas</span>
+              <span>Proventos</span>
               <strong id="incomeComparison">—</strong>
             </div>
             <div>
@@ -122,7 +122,7 @@
               <span class="eyebrow">Calendário</span>
               <h2>Movimentações do mês</h2>
             </div>
-            <span class="legend-mini"><i class="dot income-dot"></i> receita <i class="dot expense-dot"></i> despesa</span>
+            <span class="legend-mini"><i class="dot income-dot"></i> provento <i class="dot expense-dot"></i> despesa</span>
           </div>
 
           <div class="calendar" id="calendar">
@@ -147,7 +147,7 @@
           <span>＋</span> Novo lançamento
         </button>
 
-        <div class="paper-footer-note">Livro Caixa · Versão 3.1.0</div>
+        <div class="paper-footer-note">Livro Caixa · Versão 3.2.0</div>
       </section>
 
       <!-- PLANEJAMENTO -->
@@ -205,13 +205,17 @@
           <div class="type-tabs" role="tablist">
             <button type="button" class="type-tab active" data-filter="all">Todos</button>
             <button type="button" class="type-tab" data-filter="expense">Despesas</button>
-            <button type="button" class="type-tab" data-filter="income">Receitas</button>
+            <button type="button" class="type-tab" data-filter="income">Proventos</button>
           </div>
 
           <div class="filter-row">
             <label>
               <span>Categoria</span>
               <select id="categoryFilter"><option value="all">Todas</option></select>
+            </label>
+            <label>
+              <span>Pagamento</span>
+              <select id="paymentFilter"><option value="all">Todos</option><option value="cash">Dinheiro</option><option value="pix">Pix</option><option value="debit">Débito</option><option value="credit">Crédito</option><option value="crypto">Criptomoeda</option><option value="unspecified">Não informado</option></select>
             </label>
             <label>
               <span>Ordenar</span>
@@ -267,7 +271,7 @@
           <div class="mini-stat">
             <span>Taxa de economia</span>
             <strong id="savingsRate">—</strong>
-            <small id="savingsRateNote">sem receitas</small>
+            <small id="savingsRateNote">sem proventos</small>
           </div>
           <div class="mini-stat">
             <span>Categoria dominante</span>
@@ -277,7 +281,7 @@
           <div class="mini-stat">
             <span>Saldo do mês</span>
             <strong id="statsBalance">R$ 0,00</strong>
-            <small>receitas − despesas</small>
+            <small>proventos − despesas</small>
           </div>
         </div>
 
@@ -331,6 +335,19 @@
           <h2>Configurações</h2>
           <p>Categorias e orçamento continuam totalmente locais no aparelho.</p>
         </div>
+
+        <section class="settings-section pinned-notice">
+          <div class="notice-pin">FIXADO</div>
+          <div class="section-title-row"><div><span class="eyebrow">Avisos</span><h3>Instale o Livro Caixa no celular</h3></div></div>
+          <details open><summary>iPhone e iPad</summary><ol><li>Abra o app pelo <b>Safari</b>.</li><li>Toque em <b>Compartilhar</b>.</li><li>Escolha <b>Adicionar à Tela de Início</b>.</li><li>Confirme em <b>Adicionar</b>.</li></ol></details>
+          <details><summary>Android</summary><ol><li>Abra o app pelo <b>Google Chrome</b>.</li><li>Toque no menu <b>⋮</b>.</li><li>Escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme em <b>Instalar</b> ou <b>Adicionar</b>.</li></ol></details>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row"><div><span class="eyebrow">Acessibilidade</span><h3>Tamanho das letras</h3></div></div>
+          <div class="zoom-control"><button type="button" id="zoomOutBtn" aria-label="Diminuir letras">A−</button><strong id="zoomValue">100%</strong><button type="button" id="zoomInBtn" aria-label="Aumentar letras">A+</button></div>
+          <button type="button" class="text-action zoom-reset" id="zoomResetBtn">restaurar tamanho padrão</button>
+        </section>
 
         <section class="settings-section">
           <div class="section-title-row">
@@ -442,15 +459,11 @@
             </button>
           </div>
 
-          <p class="micro-note">
-            No iPhone, abra pelo Safari e use <b>Compartilhar → Adicionar à Tela de Início</b>.
-            Cada usuário mantém seus próprios dados neste navegador.
-          </p>
         </section>
 
         <section class="settings-section about-section">
           <span class="eyebrow">Sobre</span>
-          <h3>Livro Caixa · Versão 3.1.0</h3>
+          <h3>Livro Caixa · Versão 3.2.0</h3>
           <p>Controle financeiro pessoal com armazenamento local, funcionamento offline e sem necessidade de conta.</p>
         </section>
       </section>
@@ -495,7 +508,7 @@
 
         <div class="segmented">
           <button type="button" class="segment active expense-segment" data-type="expense">Despesa</button>
-          <button type="button" class="segment income-segment" data-type="income">Receita</button>
+          <button type="button" class="segment income-segment" data-type="income">Provento</button>
         </div>
         <input type="hidden" id="entryType" value="expense">
 
@@ -526,12 +539,19 @@
 
         <label class="form-field">
           <span>Forma de pagamento</span>
-          <select id="entryCard"><option value="">Conta / dinheiro</option></select>
+          <select id="entryPayment">
+            <option value="cash">Dinheiro</option><option value="pix">Pix</option><option value="debit">Cartão de débito</option><option value="credit">Cartão de crédito</option><option value="crypto">Criptomoeda</option>
+          </select>
+        </label>
+
+        <label class="form-field" id="entryCardField" hidden>
+          <span>Cartão de crédito</span>
+          <select id="entryCard"><option value="">Selecione um cartão</option></select>
         </label>
 
         <label class="check-field" id="recurringField">
           <input id="entryRecurring" type="checkbox">
-          <span><b>Lançamento fixo mensal</b><small>Será repetido todo mês até você cancelar.</small></span>
+          <span><b id="recurringLabel">Lançamento fixo mensal</b><small>Será repetido todo mês até você cancelar.</small></span>
         </label>
 
         <label class="form-field">

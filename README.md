@@ -1,9 +1,9 @@
-# Livro Caixa — V3.1.0
+# Livro Caixa — V3.2.0
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
 ## Recursos
-- receitas e despesas;
+- proventos e despesas;
 - saldo mensal;
 - orçamento mensal;
 - calendário;
@@ -32,7 +32,14 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-O service worker usa o cache `livro-caixa-v3-final-3.1.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+O service worker usa o cache `livro-caixa-v3-final-3.2.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+
+## Novidades 3.2.0
+- nomenclatura **Proventos**, incluindo proventos fixos mensais;
+- formas de pagamento: dinheiro, Pix, débito, crédito e criptomoeda;
+- controle de tamanho das letras salvo no aparelho;
+- área de avisos fixada com instruções de instalação para iOS e Android;
+- formas de pagamento incluídas em filtros visuais, relatório, CSV e backup;
 
 ## Novidades 3.1.0
 - nova área **Planejar**;
