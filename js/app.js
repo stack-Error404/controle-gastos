@@ -36,6 +36,14 @@ let recurringRules = [];
 
 const $ = id => document.getElementById(id);
 
+function debounce(fn, delay) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
 function formatBRL(value){
   return Number(value || 0).toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
 }
@@ -450,7 +458,14 @@ function filteredTransactions(){
   return filtered;
 }
 
-function renderTransactions(){
+function debounce(fn, delay) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+  function renderTransactions(){
   const list = $("transactionList");
   const filtered = filteredTransactions();
 
@@ -907,7 +922,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "3.2.0",
+    version: "3.3.0",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
@@ -952,6 +967,14 @@ function importBackupFile(file){
       }
 
       allowed.forEach(([key,value])=>localStorage.setItem(key,value));
+       // Migrate any legacy entries from "expenses:" to new format
+       for(let i=0;i<localStorage.length;i++){
+         const lkey = localStorage.key(i);
+         if(lkey && lkey.startsWith("expenses:")){
+           migrateLegacyMonth(lkey.slice("expenses:".length));
+         }
+       }
+       loadMonthData();
       loadCategories();
 
       const stored = localStorage.getItem(KEYS.month);
@@ -1305,29 +1328,29 @@ document.querySelectorAll(".type-tab").forEach(btn=>{
   });
 });
 
-$("searchInput").addEventListener("input",e=>{
+$("searchInput").addEventListener("input", debounce(e=>{
   ledgerSearch = e.target.value;
   $("clearSearchBtn").hidden = !ledgerSearch;
   renderTransactions();
-});
+}, 150));
 $("clearSearchBtn").addEventListener("click",()=>{
   ledgerSearch = "";
   $("searchInput").value = "";
   $("clearSearchBtn").hidden = true;
   renderTransactions();
 });
-$("categoryFilter").addEventListener("change",e=>{
+$("categoryFilter").addEventListener("change",debounce(e=>{
   ledgerCategory = e.target.value;
   renderTransactions();
-});
-$("paymentFilter").addEventListener("change",e=>{
+}, 100));
+$("paymentFilter").addEventListener("change",debounce(e=>{
   ledgerPayment = e.target.value;
   renderTransactions();
-});
-$("sortFilter").addEventListener("change",e=>{
+}, 100));
+$("sortFilter").addEventListener("change",debounce(e=>{
   ledgerSort = e.target.value;
   renderTransactions();
-});
+}, 100));
 $("clearDayFilterBtn").addEventListener("click",()=>{
   ledgerDayFilter = null;
   renderTransactions();
