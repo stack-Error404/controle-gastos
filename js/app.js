@@ -922,7 +922,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "3.3.0",
+    version: "3.3.1",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
