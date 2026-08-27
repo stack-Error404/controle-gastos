@@ -13,9 +13,10 @@ const processReceipt = async (file) => {
     await worker.terminate();
     // Extract value
     let value = 0;
-    const valMatch = text.match(/(?:R\$?\s?)\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d+[.,]\d{2}/);
+    const targetLine = cleanedText.split('\n').find(l => /TOTAL|VALOR PAGO/i.test(l)) || cleanedText;
+    const valMatch = targetLine.match(/(?:R\$?\s?)\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d+[.,]\d{2}/);
     if (valMatch) {
-      value = parseFloat(valMatch[0].replace(/\./g, '').replace(',', '.'));
+      value = parseFloat(valMatch[0].replace(/[R\$\s]/g, '').replace(/\./g, '').replace(',', '.'));
     }
     // Extract date
     let date = new Date().toISOString().split('T')[0];
@@ -45,9 +46,11 @@ const processReceipt = async (file) => {
     const valField = document.getElementById('entryValue');
     const dateField = document.getElementById('entryDate');
     const catField = document.getElementById('entryCategory');
+    const noteField = document.getElementById('entryNote');
     if (valField) valField.value = value.toFixed(2);
     if (dateField) dateField.value = date;
     if (catField) catField.value = category;
+    if (noteField && !noteField.value.trim()) noteField.value = 'Compra sem descrição';
     showToast('Captura concluída!');
   } catch (e) {
     console.error('Error processing OCR', e);
