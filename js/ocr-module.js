@@ -8,30 +8,34 @@ const processReceipt = async (file) => {
     const worker = await Tesseract.createWorker();
     await worker.load();
     const { data: { text } } = await worker.recognize(file);
+    let cleanedText = text.replace(/\s+/g, ' ').trim();
+
     await worker.terminate();
     // Extract value
     let value = 0;
-    const valMatch = text.match(/[0-9]{1,3}(?:[.,][0-9]{3})*(?:,1[0-9])?|(\d+,\d{2})/);
+    const valMatch = text.match(/(?:R\$?\s?)\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d+[.,]\d{2}/);
     if (valMatch) {
       value = parseFloat(valMatch[0].replace(/\./g, '').replace(',', '.'));
     }
     // Extract date
     let date = new Date().toISOString().split('T')[0];
-    const dateMatch = text.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})|(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/);
+    const dateMatch = cleanedText.match(/(\d{1,2}[\/\-\s]\d{1,2}[\/\-\s]\d{4})|(\d{4}[-\/\s]\d{1,2}[-\/\s]\d{1,2})/);
     if (dateMatch) {
       const raw = dateMatch[0];
-      if (raw.includes('/')) {
-        const parts = raw.split('/');
-        date = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      } else {
-        date = raw;
+      const parts = raw.split(/[\/\-\s]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) { // YYYY-MM-DD
+          date = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+        } else { // DD-MM-YYYY
+          date = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        }
       }
     }
     // Category based on text content
     let category = 'Outros';
     if (Array.isArray(globalThis.categories)) {
       for (const c of globalThis.categories) {
-        if (text.toLowerCase().includes(c.toLowerCase())) {
+        if (cleanedText.toLowerCase().includes(c.toLowerCase())) {
           category = c;
           break;
         }
