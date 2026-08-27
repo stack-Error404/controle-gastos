@@ -728,12 +728,11 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryValue").value = entry.value;
     $("entryDate").value = entry.date;
     $("entryNote").value = entry.note || "";
-    $("entryPayment").value = entry.paymentMethod || (entry.cardId ? "credit" : "cash");
-    $("entryCard").value = entry.cardId || "";
-    updateCardField();
-    $("entryRecurring").checked = false;
-    $("entryPayment").value = "cash";
-    updateCardField();
+     $("entryPayment").value = entry.paymentMethod || (entry.cardId ? "credit" : "cash");
+     $("entryCard").value = entry.cardId || "";
+     updateCardField();
+     $("entryRecurring").checked = false;
+
     $("recurringField").hidden = true;
     setEntryType(entry.type);
 
