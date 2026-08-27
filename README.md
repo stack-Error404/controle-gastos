@@ -1,4 +1,4 @@
-# Livro Caixa — V3.3.0
+# Livro Caixa — V3.3.1
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
@@ -32,9 +32,10 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-O service worker usa o cache `livro-caixa-v3-final-3.3.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+  O service worker usa o cache `livro-caixa-v3-final-3.3.1`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
 
-## Novidades 3.3.0
+
+## Novidades 3.3.1
 - nomenclatura **Proventos**, incluindo proventos fixos mensais;
 - formas de pagamento: dinheiro, Pix, débito, crédito e criptomoeda;
 - controle de tamanho das letras salvo no aparelho;
