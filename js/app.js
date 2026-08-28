@@ -12,6 +12,7 @@ const DEFAULT_CATEGORIES = [
 const KEYS = {
   categories: "lc:v3:categories",
   theme: "lc:v3:theme",
+  palette: "lc:v4:palette",
   month: "lc:v3:month",
   entriesPrefix: "lc:v3:entries:",
   budgetPrefix: "lc:v3:budget:",
@@ -22,10 +23,20 @@ const KEYS = {
 };
 const PAYMENT_LABELS={cash:"Dinheiro",pix:"Pix",debit:"Cartão de débito",credit:"Cartão de crédito",crypto:"Criptomoeda",unspecified:"Não informado"};
 
+const PALETTES = {
+  "classic-light": { name: "Clássico (Pergaminho)", dark: false },
+  "classic-dark": { name: "Clássico Noturno", dark: true },
+  "red-light": { name: "Branco & Vermelho", dark: false },
+  "red-dark": { name: "Preto & Carmim", dark: true },
+  "rose-light": { name: "Branco & Rosé", dark: false },
+  "rose-dark": { name: "Preto & Magenta", dark: true }
+};
+
 let categories = [];
 let currentDate = new Date();
 let entries = [];
 let ledgerFilter = "all";
+let ledgerStatus = "all";
 let ledgerCategory = "all";
 let ledgerPayment = "all";
 let ledgerSort = "date-desc";
@@ -430,6 +441,8 @@ function filteredTransactions(){
   let filtered = [...entries];
 
   if(ledgerFilter!=="all") filtered = filtered.filter(e=>e.type===ledgerFilter);
+  if(ledgerStatus==="paid") filtered = filtered.filter(e=>e.paid!==false);
+  if(ledgerStatus==="pending") filtered = filtered.filter(e=>e.paid===false);
   if(ledgerCategory!=="all") filtered = filtered.filter(e=>e.category===ledgerCategory);
   if(ledgerPayment!=="all") filtered = filtered.filter(e=>(e.paymentMethod||(e.cardId?"credit":"unspecified"))===ledgerPayment);
   if(ledgerDayFilter) filtered = filtered.filter(e=>e.date===ledgerDayFilter);
@@ -466,7 +479,8 @@ function debounce(fn, delay) {
     timeout = setTimeout(() => fn.apply(this, args), delay);
   };
 }
-  function renderTransactions(){
+
+function renderTransactions(){
   const list = $("transactionList");
   const filtered = filteredTransactions();
 
@@ -493,15 +507,40 @@ function debounce(fn, delay) {
     const sign = e.type==="expense"?"−":"+";
     const card = cards.find(c=>c.id===e.cardId);
     const payment=e.paymentMethod||(e.cardId?"credit":"unspecified");
+    const isPaid = e.paid !== false;
+    const stampText = isPaid ? "✓ PAGO" : "⏳ A PAGAR";
+    const stampClass = isPaid ? "paid" : "pending";
+
     return `
-      <article class="tx" data-entry-id="${escapeHtml(e.id)}">
-        <div class="tx-date"><strong>${d}</strong>${monthShort}</div>
-        <div class="tx-info">
-          <span class="tx-title">${escapeHtml(e.description)}</span>
-          <span class="tx-meta">${escapeHtml(e.category)} · ${PAYMENT_LABELS[payment]||"Não informado"}${card?` · ${escapeHtml(card.name)}`:""}${e.recurringId?` · ${e.type==="income"?"provento fixo":"despesa fixa"}`:""}${e.note?" · com observação":""}</span>
+      <div class="tx-row" data-entry-id="${escapeHtml(e.id)}">
+        <div class="tx-swipe-action tx-action-left">
+          <button type="button" class="tx-swipe-btn" data-swipe-edit="${escapeHtml(e.id)}" aria-label="Editar">
+            <span>✎</span>
+            Editar
+          </button>
         </div>
-        <span class="tx-value ${e.type}">${sign} ${formatBRL(e.value)}</span>
-      </article>`;
+
+        <article class="tx" data-entry-id="${escapeHtml(e.id)}">
+          <div class="tx-date"><strong>${d}</strong>${monthShort}</div>
+          <div class="tx-info">
+            <div class="tx-title-row">
+              <span class="tx-title">${escapeHtml(e.description)}</span>
+              <button type="button" class="stamp-badge ${stampClass}" data-toggle-paid="${escapeHtml(e.id)}" title="Clique para alternar pago/pendente">
+                ${stampText}
+              </button>
+            </div>
+            <span class="tx-meta">${escapeHtml(e.category)} · ${PAYMENT_LABELS[payment]||"Não informado"}${card?` · ${escapeHtml(card.name)}`:""}${e.recurringId?` · ${e.type==="income"?"provento fixo":"despesa fixa"}`:""}${e.note?" · com observação":""}</span>
+          </div>
+          <span class="tx-value ${e.type}">${sign} ${formatBRL(e.value)}</span>
+        </article>
+
+        <div class="tx-swipe-action tx-action-right">
+          <button type="button" class="tx-swipe-btn" data-swipe-delete="${escapeHtml(e.id)}" aria-label="Apagar">
+            <span>🗑</span>
+            Apagar
+          </button>
+        </div>
+      </div>`;
   }).join("");
 }
 
@@ -729,10 +768,11 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryValue").value = entry.value;
     $("entryDate").value = entry.date;
     $("entryNote").value = entry.note || "";
-     $("entryPayment").value = entry.paymentMethod || (entry.cardId ? "credit" : "cash");
-     $("entryCard").value = entry.cardId || "";
-     updateCardField();
-     $("entryRecurring").checked = false;
+    $("entryPayment").value = entry.paymentMethod || (entry.cardId ? "credit" : "cash");
+    $("entryCard").value = entry.cardId || "";
+    updateCardField();
+    if($("entryPaid")) $("entryPaid").checked = entry.paid !== false;
+    $("entryRecurring").checked = false;
 
     $("recurringField").hidden = true;
     setEntryType(entry.type);
@@ -748,6 +788,7 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryModalTitle").textContent = "Novo lançamento";
     $("entryForm").reset();
     $("entryId").value = "";
+    if($("entryPaid")) $("entryPaid").checked = true;
     $("entryDate").value = defaultDate || (
       getMonthKey()===todayISO().slice(0,7) ? todayISO() : `${getMonthKey()}-01`
     );
@@ -793,6 +834,7 @@ function saveEntryFromForm(event){
   const paymentMethod = $("entryPayment").value;
   const cardId = paymentMethod==="credit" ? $("entryCard").value : "";
   const makeRecurring = $("entryRecurring").checked && !id;
+  const paid = $("entryPaid") ? $("entryPaid").checked : true;
 
   if(!description || !date || !category || !Number.isFinite(value) || value<=0){
     showToast("Preencha os campos obrigatórios.");
@@ -803,7 +845,7 @@ function saveEntryFromForm(event){
   const entryMonth = date.slice(0,7);
   const newEntry = {
     id:id || `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    type,description,value,category,date,note,paymentMethod,cardId,createdAt:Date.now()
+    type,description,value,category,date,note,paymentMethod,cardId,paid,createdAt:Date.now()
   };
 
   if(makeRecurring){
@@ -1263,6 +1305,233 @@ renderLastBackup();
 updatePwaStatus();
 
 
+/* Paletas de Cores & Temas */
+function setPalette(paletteId, notify = true){
+  if(!PALETTES[paletteId]) paletteId = "classic-light";
+  document.body.classList.remove(
+    "theme-classic-light",
+    "theme-classic-dark",
+    "theme-red-light",
+    "theme-red-dark",
+    "theme-rose-light",
+    "theme-rose-dark",
+    "dark"
+  );
+  document.body.classList.add(`theme-${paletteId}`);
+  if(PALETTES[paletteId].dark){
+    document.body.classList.add("dark");
+  }
+  localStorage.setItem(KEYS.palette, paletteId);
+  localStorage.setItem(KEYS.theme, PALETTES[paletteId].dark ? "dark" : "light");
+
+  document.querySelectorAll(".palette-card").forEach(card=>{
+    card.classList.toggle("active", card.dataset.palette === paletteId);
+  });
+  const label = $("activePaletteLabel");
+  if(label) label.textContent = `Paleta ativa: ${PALETTES[paletteId].name}`;
+
+  if(notify){
+    showToast(`Paleta "${PALETTES[paletteId].name}" aplicada.`);
+  }
+}
+
+function openPaletteModal(){
+  const modal = $("paletteModal");
+  if(!modal) return;
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+  const current = localStorage.getItem(KEYS.palette) || (document.body.classList.contains("dark") ? "classic-dark" : "classic-light");
+  document.querySelectorAll(".palette-card").forEach(card=>{
+    card.classList.toggle("active", card.dataset.palette === current);
+  });
+}
+
+function closePaletteModal(){
+  const modal = $("paletteModal");
+  if(!modal) return;
+  modal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+/* Alternar status Pago / A Pagar com carimbo */
+function toggleEntryPaid(entryId, e = null){
+  if(e){
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const entry = entries.find(item => item.id === entryId);
+  if(!entry) return;
+  entry.paid = entry.paid === false ? true : false;
+  saveMonthData();
+  renderTransactions();
+
+  if(entry.paid){
+    showToast("✓ Lançamento carimbado como PAGO.");
+  }else{
+    showToast("⏳ Lançamento marcado como A PAGAR.");
+  }
+}
+
+/* Gestos de Arrastar pro Lado (Swipe estilo Gmail) */
+function setupSwipeGestures(){
+  const list = $("transactionList");
+  if(!list || list._swipeBound) return;
+  list._swipeBound = true;
+
+  let activeTx = null;
+  let startX = 0;
+  let startY = 0;
+  let currentDiffX = 0;
+  let isSwiping = false;
+  let isHorizontal = null;
+
+  const closeActiveSwipe = (exceptTx = null)=>{
+    list.querySelectorAll(".tx.swiped-left, .tx.swiped-right").forEach(el=>{
+      if(el !== exceptTx){
+        el.classList.remove("swiped-left", "swiped-right", "swiping");
+        el.style.transform = "";
+      }
+    });
+  };
+
+  const handleStart = (clientX, clientY, target)=>{
+    const tx = target.closest(".tx");
+    if(!tx) return;
+    if(target.closest("[data-toggle-paid]") || target.closest(".tx-swipe-btn")) return;
+
+    activeTx = tx;
+    startX = clientX;
+    startY = clientY;
+    currentDiffX = 0;
+    isSwiping = false;
+    isHorizontal = null;
+
+    closeActiveSwipe(tx);
+  };
+
+  const handleMove = (clientX, clientY)=>{
+    if(!activeTx) return;
+    const diffX = clientX - startX;
+    const diffY = clientY - startY;
+
+    if(isHorizontal === null){
+      if(Math.abs(diffX) > 6 || Math.abs(diffY) > 6){
+        isHorizontal = Math.abs(diffX) > Math.abs(diffY);
+      }
+    }
+
+    if(!isHorizontal) return;
+
+    isSwiping = true;
+    activeTx.classList.add("swiping");
+
+    let moveX = diffX;
+    if(moveX > 78) moveX = 78 + (moveX - 78) * 0.3;
+    if(moveX < -78) moveX = -78 + (moveX + 78) * 0.3;
+
+    currentDiffX = moveX;
+    activeTx.style.transform = `translateX(${moveX}px)`;
+  };
+
+  const handleEnd = ()=>{
+    if(!activeTx) return;
+    activeTx.classList.remove("swiping");
+
+    if(isSwiping){
+      if(currentDiffX > 45){
+        activeTx.classList.remove("swiped-left");
+        activeTx.classList.add("swiped-right");
+        activeTx.style.transform = "";
+      }else if(currentDiffX < -45){
+        activeTx.classList.remove("swiped-right");
+        activeTx.classList.add("swiped-left");
+        activeTx.style.transform = "";
+      }else{
+        activeTx.classList.remove("swiped-left", "swiped-right");
+        activeTx.style.transform = "";
+      }
+    }
+
+    activeTx = null;
+    isSwiping = false;
+  };
+
+  list.addEventListener("touchstart", e=>{
+    const touch = e.touches[0];
+    handleStart(touch.clientX, touch.clientY, e.target);
+  }, { passive: true });
+
+  list.addEventListener("touchmove", e=>{
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  list.addEventListener("touchend", handleEnd);
+  list.addEventListener("touchcancel", handleEnd);
+
+  // Mouse / Pointer drag support for desktop
+  let isMouseDown = false;
+  list.addEventListener("mousedown", e=>{
+    if(e.button !== 0) return;
+    isMouseDown = true;
+    handleStart(e.clientX, e.clientY, e.target);
+  });
+  window.addEventListener("mousemove", e=>{
+    if(!isMouseDown) return;
+    handleMove(e.clientX, e.clientY);
+  });
+  window.addEventListener("mouseup", ()=>{
+    if(!isMouseDown) return;
+    isMouseDown = false;
+    handleEnd();
+  });
+
+  list.addEventListener("click", e=>{
+    const stampBtn = e.target.closest("[data-toggle-paid]");
+    if(stampBtn){
+      e.stopPropagation();
+      toggleEntryPaid(stampBtn.dataset.togglePaid, e);
+      return;
+    }
+
+    const editBtn = e.target.closest("[data-swipe-edit]");
+    if(editBtn){
+      e.stopPropagation();
+      const entry = entries.find(item => item.id === editBtn.dataset.swipeEdit);
+      closeActiveSwipe();
+      if(entry) openEntryModal(entry);
+      return;
+    }
+
+    const deleteBtn = e.target.closest("[data-swipe-delete]");
+    if(deleteBtn){
+      e.stopPropagation();
+      const id = deleteBtn.dataset.swipeDelete;
+      closeActiveSwipe();
+      if(confirm("Excluir este lançamento?")){
+        entries = entries.filter(item => item.id !== id);
+        saveMonthData();
+        loadMonthData();
+        showToast("Lançamento excluído.");
+      }
+      return;
+    }
+
+    const swipedTx = e.target.closest(".tx.swiped-left, .tx.swiped-right");
+    if(swipedTx){
+      e.stopPropagation();
+      closeActiveSwipe();
+      return;
+    }
+
+    const row = e.target.closest("[data-entry-id]");
+    if(!row) return;
+    closeActiveSwipe();
+    const entry = entries.find(item => item.id === row.dataset.entryId);
+    if(entry) openEntryModal(entry);
+  });
+}
+
 /* Inicialização */
 loadPlanningData();
 loadCategories();
@@ -1274,16 +1543,26 @@ if(storedMonth && /^\d{4}-\d{2}$/.test(storedMonth)){
   currentDate = new Date(y,m-1,1);
 }
 
-const savedTheme = localStorage.getItem(KEYS.theme);
-if(savedTheme==="dark"){
-  document.body.classList.add("dark");
-  document.querySelector(".theme-icon").textContent = "☀";
-}
+// Carrega paleta de cores
+const savedPalette = localStorage.getItem(KEYS.palette) || (localStorage.getItem(KEYS.theme)==="dark" ? "classic-dark" : "classic-light");
+setPalette(savedPalette, false);
 
-$("themeToggle").addEventListener("click",()=>{
-  const dark = document.body.classList.toggle("dark");
-  document.querySelector(".theme-icon").textContent = dark ? "☀" : "☾";
-  localStorage.setItem(KEYS.theme,dark ? "dark" : "light");
+$("palettePickerBtn")?.addEventListener("click", openPaletteModal);
+$("settingsPaletteBtn")?.addEventListener("click", openPaletteModal);
+
+document.querySelectorAll("[data-close-palette]").forEach(btn=>{
+  btn.addEventListener("click", closePaletteModal);
+});
+
+$("paletteModal")?.addEventListener("click", e=>{
+  if(e.target === $("paletteModal")) closePaletteModal();
+});
+
+document.querySelectorAll(".palette-card").forEach(card=>{
+  card.addEventListener("click", ()=>{
+    setPalette(card.dataset.palette);
+    closePaletteModal();
+  });
 });
 
 $("prevMonth").addEventListener("click",()=>changeMonth(-1));
@@ -1314,13 +1593,6 @@ document.querySelectorAll(".segment").forEach(btn=>{
 $("entryForm").addEventListener("submit",saveEntryFromForm);
 $("deleteEntryBtn").addEventListener("click",deleteCurrentEntry);
 
-$("transactionList").addEventListener("click",e=>{
-  const row = e.target.closest("[data-entry-id]");
-  if(!row) return;
-  const entry = entries.find(item=>item.id===row.dataset.entryId);
-  if(entry) openEntryModal(entry);
-});
-
 document.querySelectorAll(".type-tab").forEach(btn=>{
   btn.addEventListener("click",()=>{
     ledgerFilter = btn.dataset.filter;
@@ -1329,29 +1601,39 @@ document.querySelectorAll(".type-tab").forEach(btn=>{
   });
 });
 
+$("statusFilter")?.addEventListener("change", debounce(e=>{
+  ledgerStatus = e.target.value;
+  renderTransactions();
+}, 100));
+
 $("searchInput").addEventListener("input", debounce(e=>{
   ledgerSearch = e.target.value;
   $("clearSearchBtn").hidden = !ledgerSearch;
   renderTransactions();
 }, 150));
+
 $("clearSearchBtn").addEventListener("click",()=>{
   ledgerSearch = "";
   $("searchInput").value = "";
   $("clearSearchBtn").hidden = true;
   renderTransactions();
 });
+
 $("categoryFilter").addEventListener("change",debounce(e=>{
   ledgerCategory = e.target.value;
   renderTransactions();
 }, 100));
+
 $("paymentFilter").addEventListener("change",debounce(e=>{
   ledgerPayment = e.target.value;
   renderTransactions();
 }, 100));
+
 $("sortFilter").addEventListener("change",debounce(e=>{
   ledgerSort = e.target.value;
   renderTransactions();
 }, 100));
+
 $("clearDayFilterBtn").addEventListener("click",()=>{
   ledgerDayFilter = null;
   renderTransactions();
@@ -1417,6 +1699,7 @@ document.addEventListener("keydown",e=>{
     if(!$("budgetModal").hidden) closeBudgetModal();
     if(!$("reportModal").hidden) closeReport();
     if(!$("cardModal").hidden) closeCardModal();
+    if($("paletteModal") && !$("paletteModal").hidden) closePaletteModal();
   }
 });
 
@@ -1426,4 +1709,5 @@ if("serviceWorker" in navigator){
   });
 }
 
+setupSwipeGestures();
 loadMonthData();

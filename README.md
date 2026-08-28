@@ -1,4 +1,4 @@
-# Livro Caixa — V4.0.0
+# Livro Caixa — V4.1.0
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
@@ -9,7 +9,10 @@ Aplicativo web/PWA de controle financeiro pessoal.
 - calendário;
 - categorias personalizáveis;
 - edição e exclusão de lançamentos;
-- pesquisa e filtros;
+- carimbo visual de status **PAGO** / **A PAGAR**;
+- gestos de arrastar para o lado estilo Gmail (Swipe para Editar ou Excluir);
+- seletor de paletas de cores e temas visuais (6 temas completos);
+- pesquisa e filtros avançados (incluindo filtro por situação pago/pendente);
 - comparativo mensal;
 - gráficos e estatísticas;
 - backup JSON completo;
@@ -18,7 +21,6 @@ Aplicativo web/PWA de controle financeiro pessoal.
 - relatório mensal para impressão/salvamento em PDF;
 - compartilhamento do link;
 - funcionamento offline após o primeiro carregamento;
-- modo escuro;
 - cartões de crédito ilimitados, com fechamento, vencimento e limite opcional;
 - lançamentos futuros em qualquer mês;
 - lançamentos fixos com repetição mensal e cancelamento da recorrência;
@@ -33,10 +35,20 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-  O service worker usa o cache `livro-caixa-v4.0.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+O service worker usa o cache `livro-caixa-v4.1.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
 
-
-## Novidades 4.0.0
+## Novidades 4.1.0
+- **Carimbo "PAGO" e "A PAGAR"**: identificação visual no estilo clássico com toque direto para alternar a liquidação de qualquer conta;
+- **Filtro por Situação**: novo filtro no Livro de Lançamentos para listar apenas contas pagas ou pendentes a pagar;
+- **Gestos de Swipe (estilo Gmail)**: arraste qualquer lançamento para a direita para **Editar** ou para a esquerda para **Apagar** rapidamente;
+- **6 Paletas de Cores Personalizadas**:
+  - *Clássico (Pergaminho)*: tema tradicional de livro caixa com papel antigo e detalhes em couro e verde;
+  - *Clássico Noturno*: versão escura do livro clássico com dourado e tons escuros;
+  - *Branco & Vermelho*: estilo minimalista com fundo branco, letras pretas e botões/ações em vermelho carmim;
+  - *Preto & Carmim*: fundo escuro elegante com destaques e ações em vermelho;
+  - *Branco & Rosé*: fundo claro com toques sofisticados de rosa e ações em preto;
+  - *Preto & Magenta*: fundo escuro moderno com detalhes em rosa e destaques vibrantes;
+- **Acesso Rápido às Paletas**: botão 🎨 no topo do aplicativo e nas configurações para troca instantânea de tema.
 - **Leitura OCR e extração automática**: leitura de comprovantes de pagamento e notas fiscais com preenchimento inteligente de valor, data, descrição/beneficiário, categoria e forma de pagamento;
 - **Envio da memória do aparelho**: novo botão para enviar comprovantes em imagem (PNG, JPG, JPEG, WEBP) ou documentos em PDF (faturas, Pix e boletos bancários) direto da galeria e arquivos;
 - **Captura rápida via Câmera**: botão dedicado na tela inicial e no formulário para fotografar notas físicas e carimbar lançamentos;

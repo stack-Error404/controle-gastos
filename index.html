@@ -24,8 +24,8 @@
         <span class="brand-rule" aria-hidden="true"></span>
       </div>
 
-      <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema">
-        <span class="theme-icon" aria-hidden="true">☾</span>
+      <button class="icon-button theme-toggle" id="palettePickerBtn" type="button" aria-label="Escolher paleta de cores e tema">
+        <span class="theme-icon palette-icon" aria-hidden="true">🎨</span>
       </button>
     </header>
 
@@ -223,6 +223,14 @@
 
           <div class="filter-row">
             <label>
+              <span>Situação</span>
+              <select id="statusFilter">
+                <option value="all">Todas</option>
+                <option value="paid">✓ Pagos</option>
+                <option value="pending">⏳ A pagar</option>
+              </select>
+            </label>
+            <label>
               <span>Categoria</span>
               <select id="categoryFilter"><option value="all">Todas</option></select>
             </label>
@@ -360,6 +368,17 @@
           <div class="section-title-row"><div><span class="eyebrow">Acessibilidade</span><h3>Tamanho das letras</h3></div></div>
           <div class="zoom-control"><button type="button" id="zoomOutBtn" aria-label="Diminuir letras">A−</button><strong id="zoomValue">100%</strong><button type="button" id="zoomInBtn" aria-label="Aumentar letras">A+</button></div>
           <button type="button" class="text-action zoom-reset" id="zoomResetBtn">restaurar tamanho padrão</button>
+        </section>
+
+        <section class="settings-section">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Aparência</span>
+              <h3>Paleta de cores e temas</h3>
+            </div>
+            <button class="text-action" id="settingsPaletteBtn" type="button">escolher</button>
+          </div>
+          <p class="micro-note" id="activePaletteLabel">Paleta ativa: Clássico (Pergaminho)</p>
         </section>
 
         <section class="settings-section">
@@ -563,6 +582,11 @@
           <select id="entryCard"><option value="">Selecione um cartão</option></select>
         </label>
 
+        <label class="check-field" id="paidField">
+          <input id="entryPaid" type="checkbox" checked>
+          <span><b id="paidLabel">Lançamento já pago / liquidado</b><small>Desmarque para registrar como conta a pagar / pendente.</small></span>
+        </label>
+
         <label class="check-field" id="recurringField">
           <input id="entryRecurring" type="checkbox">
           <span><b id="recurringLabel">Lançamento fixo mensal</b><small>Será repetido todo mês até você cancelar.</small></span>
@@ -632,6 +656,91 @@
     </section>
   </div>
 
+
+  <!-- MODAL PALETA DE CORES -->
+  <div class="modal-backdrop" id="paletteModal" hidden>
+    <section class="paper-modal palette-modal" role="dialog" aria-modal="true" aria-labelledby="paletteModalTitle">
+      <button type="button" class="modal-close" data-close-palette aria-label="Fechar">×</button>
+      <div class="modal-heading">
+        <span class="eyebrow">Personalização visual</span>
+        <h2 id="paletteModalTitle">Paletas de Cores</h2>
+      </div>
+
+      <div class="palette-grid">
+        <button type="button" class="palette-card" data-palette="classic-light">
+          <div class="palette-swatch swatch-classic-light">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Clássico (Pergaminho)</strong>
+            <small>Papel antigo e verde couro</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+
+        <button type="button" class="palette-card" data-palette="classic-dark">
+          <div class="palette-swatch swatch-classic-dark">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Clássico Noturno</strong>
+            <small>Couro escuro e dourado</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+
+        <button type="button" class="palette-card" data-palette="red-light">
+          <div class="palette-swatch swatch-red-light">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Branco & Vermelho</strong>
+            <small>Fundo branco e ações vermelhas</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+
+        <button type="button" class="palette-card" data-palette="red-dark">
+          <div class="palette-swatch swatch-red-dark">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Preto & Carmim</strong>
+            <small>Fundo preto e ações vermelhas</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+
+        <button type="button" class="palette-card" data-palette="rose-light">
+          <div class="palette-swatch swatch-rose-light">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Branco & Rosé</strong>
+            <small>Fundo claro, rosa e ações pretas</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+
+        <button type="button" class="palette-card" data-palette="rose-dark">
+          <div class="palette-swatch swatch-rose-dark">
+            <span>Aa</span>
+            <span class="swatch-accent"></span>
+          </div>
+          <div class="palette-info">
+            <strong>Preto & Magenta</strong>
+            <small>Fundo preto, rosa e destaques</small>
+          </div>
+          <span class="palette-check">✓</span>
+        </button>
+      </div>
+    </section>
+  </div>
 
   <!-- RELATÓRIO -->
   <div class="modal-backdrop" id="reportModal" hidden>
