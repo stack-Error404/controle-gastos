@@ -1,4 +1,4 @@
-# Livro Caixa — V3.3.1
+# Livro Caixa — V4.0.0
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
@@ -22,8 +22,9 @@ Aplicativo web/PWA de controle financeiro pessoal.
 - cartões de crédito ilimitados, com fechamento, vencimento e limite opcional;
 - lançamentos futuros em qualquer mês;
 - lançamentos fixos com repetição mensal e cancelamento da recorrência;
-- compatibilidade com os dados das Etapas 2 e 3;
-- migração dos gastos do formato antigo `expenses:AAAA-MM`.
+- leitura OCR de comprovantes e notas fiscais com preenchimento automático;
+- captura direta pela câmera ou envio de fotos/PDF da memória do aparelho (PNG, JPEG, PDF);
+- compatibilidade com os dados das versões anteriores.
 
 ## Armazenamento
 Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda apenas os arquivos do aplicativo.
@@ -32,8 +33,14 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-  O service worker usa o cache `livro-caixa-v3-final-3.3.1`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+  O service worker usa o cache `livro-caixa-v4.0.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
 
+
+## Novidades 4.0.0
+- **Leitura OCR e extração automática**: leitura de comprovantes de pagamento e notas fiscais com preenchimento inteligente de valor, data, descrição/beneficiário, categoria e forma de pagamento;
+- **Envio da memória do aparelho**: novo botão para enviar comprovantes em imagem (PNG, JPG, JPEG, WEBP) ou documentos em PDF (faturas, Pix e boletos bancários) direto da galeria e arquivos;
+- **Captura rápida via Câmera**: botão dedicado na tela inicial e no formulário para fotografar notas físicas e carimbar lançamentos;
+- **Suporte nativo a PDF**: extração direta de texto via PDF.js e OCR com Tesseract.js v5;
 
 ## Novidades 3.3.1
 - nomenclatura **Proventos**, incluindo proventos fixos mensais;

@@ -246,6 +246,58 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   font-size:9px;letter-spacing:.08em;text-transform:uppercase;opacity:.7;
 }
 
+.home-actions-stack{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  position:relative;
+  z-index:1;
+}
+.home-actions-stack .secondary-paper-button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:11px;
+  padding:12px 14px;
+}
+.home-actions-stack .secondary-paper-button span{
+  font-size:16px;
+}
+
+.modal-ocr-section{
+  margin:10px 0 6px;
+  padding:10px 12px;
+  border:1px dashed rgba(107,95,79,.32);
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+}
+.ocr-section-label{
+  display:block;
+  font-family:Arial,sans-serif;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--ink-soft);
+  margin-bottom:8px;
+}
+.modal-ocr-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.modal-ocr-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-size:10px;
+  padding:9px 8px;
+}
+.modal-ocr-btn span{
+  font-size:15px;
+}
+
 .page-heading{position:relative;z-index:1;margin-bottom:22px}
 .page-heading h2{font-size:27px}
 .page-heading p{margin:8px 0 0;color:var(--ink-soft);line-height:1.5;font-style:italic;font-size:14px;max-width:390px}
@@ -533,6 +585,7 @@ body.dark .money-input,body.dark .form-field>input,body.dark .form-field>select,
 body.dark .form-field>textarea,body.dark .inline-form input,body.dark .search-box,
 body.dark .filter-row select{background:rgba(255,255,255,.025)}
 body.dark .donut-chart::after{background:var(--paper)}
+body.dark .modal-ocr-section{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}
 
 @keyframes pageIn{from{opacity:0;transform:translateY(8px) rotateY(-1.3deg)}to{opacity:1;transform:none}}
 @keyframes pageShift{

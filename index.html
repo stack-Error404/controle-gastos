@@ -142,13 +142,24 @@
           </div>
           <div id="categoryBreakdown" class="category-breakdown"></div>
         </section>
-<button class="primary-paper-button" type="button" data-open-entry>
-          <span>＋</span>
-          <span class="icon-badge">📷</span>
-          Novo lançamento
-        </button>
+        <div class="home-actions-stack">
+          <button class="primary-paper-button" type="button" data-open-entry>
+            <span>＋</span>
+            Novo lançamento manual
+          </button>
 
-        <div class="paper-footer-note">Livro Caixa · Versão 3.3.1</div>
+          <button class="secondary-paper-button action-btn-camera" type="button" id="homeCameraBtn" data-ocr-camera>
+            <span>📷</span>
+            Capturar comprovante (Câmera)
+          </button>
+
+          <button class="secondary-paper-button action-btn-upload" type="button" id="homeUploadBtn" data-ocr-upload>
+            <span>📁</span>
+            Enviar da memória / Galeria (PNG, JPG, PDF)
+          </button>
+        </div>
+
+        <div class="paper-footer-note">Livro Caixa · Versão 4.0.0</div>
 
       </section>
 
@@ -465,7 +476,7 @@
 
         <section class="settings-section about-section">
           <span class="eyebrow">Sobre</span>
-          <h3>Livro Caixa · Versão 3.3.1</h3>
+          <h3>Livro Caixa · Versão 4.0.0</h3>
 
           <p>Controle financeiro pessoal com armazenamento local, funcionamento offline e sem necessidade de conta.</p>
         </section>
@@ -557,6 +568,18 @@
           <span><b id="recurringLabel">Lançamento fixo mensal</b><small>Será repetido todo mês até você cancelar.</small></span>
         </label>
 
+        <div class="modal-ocr-section">
+          <span class="ocr-section-label">Ler comprovante / nota fiscal:</span>
+          <div class="modal-ocr-buttons">
+            <button type="button" class="secondary-paper-button modal-ocr-btn" id="modalCameraBtn" data-ocr-camera>
+              <span>📷</span> Câmera
+            </button>
+            <button type="button" class="secondary-paper-button modal-ocr-btn" id="modalUploadBtn" data-ocr-upload>
+              <span>📁</span> Galeria / PDF
+            </button>
+          </div>
+        </div>
+
         <label class="form-field">
           <span>Observação <em>opcional</em></span>
           <textarea id="entryNote" maxlength="160" rows="3" placeholder="Alguma informação adicional"></textarea>
@@ -628,8 +651,9 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-<script src="js/app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/app.js"></script>
 <script src="js/ocr-module.js"></script>
 
 

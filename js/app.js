@@ -89,6 +89,7 @@ function showToast(message){
   clearTimeout(showToast._timer);
   showToast._timer = setTimeout(()=>toast.classList.remove("show"), 1900);
 }
+globalThis.showToast = showToast;
 
 function loadCategories(){
   try{
@@ -759,6 +760,7 @@ function openEntryModal(entry=null,defaultDate=null){
 
   setTimeout(()=>$("entryDescription").focus(),50);
 }
+globalThis.openEntryModal = openEntryModal;
 
 function closeEntryModal(){
   $("entryModal").hidden = true;
@@ -921,7 +923,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "3.3.1",
+    version: "4.0.0",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
