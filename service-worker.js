@@ -1,10 +1,10 @@
-
-const CACHE = "livro-caixa-v3-final-3.3.1";
+const CACHE = "livro-caixa-v3-final-3.3.1-ocr1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./js/ocr-module.js",
   "./manifest.webmanifest",
   "./assets/icon-180.png",
   "./assets/icon-192.png",
