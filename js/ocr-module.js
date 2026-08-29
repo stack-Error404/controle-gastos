@@ -677,6 +677,8 @@
     }
   };
 
+  let pendingOcrAction = null;
+
   // Abre diretamente a câmera do aparelho para tirar foto do comprovante
   const openCameraScanner = () => {
     const input = document.createElement('input');
@@ -712,13 +714,58 @@
     input.click();
   };
 
+  // Modal explicativo com dicas de qualidade para leitura perfeita
+  const openOcrTipsModal = (action = 'camera') => {
+    pendingOcrAction = action;
+    const modal = document.getElementById('ocrTipsModal');
+    if (!modal) {
+      if (action === 'camera') openCameraScanner();
+      else openFileUpload();
+      return;
+    }
+
+    const icon = document.getElementById('proceedOcrIcon');
+    const label = document.getElementById('proceedOcrLabel');
+    const title = document.getElementById('ocrTipsTitle');
+
+    if (action === 'camera') {
+      if (icon) icon.textContent = '📷';
+      if (label) label.textContent = 'Abrir Câmera';
+      if (title) title.textContent = 'Dicas para tirar a foto';
+    } else {
+      if (icon) icon.textContent = '📁';
+      if (label) label.textContent = 'Selecionar Arquivo';
+      if (title) title.textContent = 'Dicas para envio de arquivo';
+    }
+
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+  };
+
+  const closeOcrTipsModal = () => {
+    const modal = document.getElementById('ocrTipsModal');
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    pendingOcrAction = null;
+  };
+
+  const proceedWithOcr = () => {
+    const action = pendingOcrAction;
+    closeOcrTipsModal();
+    if (action === 'camera') {
+      openCameraScanner();
+    } else {
+      openFileUpload();
+    }
+  };
+
   const setupEventListeners = () => {
     document.querySelectorAll('[data-ocr-camera]').forEach((btn) => {
       if (!btn.dataset.ocrBound) {
         btn.dataset.ocrBound = 'true';
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          openCameraScanner();
+          openOcrTipsModal('camera');
         });
       }
     });
@@ -728,7 +775,7 @@
         btn.dataset.ocrBound = 'true';
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          openFileUpload();
+          openOcrTipsModal('upload');
         });
       }
     });
@@ -736,25 +783,51 @@
     const homeCameraBtn = document.getElementById('homeCameraBtn');
     if (homeCameraBtn && !homeCameraBtn.dataset.ocrBound) {
       homeCameraBtn.dataset.ocrBound = 'true';
-      homeCameraBtn.addEventListener('click', openCameraScanner);
+      homeCameraBtn.addEventListener('click', () => openOcrTipsModal('camera'));
     }
 
     const homeUploadBtn = document.getElementById('homeUploadBtn');
     if (homeUploadBtn && !homeUploadBtn.dataset.ocrBound) {
       homeUploadBtn.dataset.ocrBound = 'true';
-      homeUploadBtn.addEventListener('click', openFileUpload);
+      homeUploadBtn.addEventListener('click', () => openOcrTipsModal('upload'));
     }
 
     const modalCameraBtn = document.getElementById('modalCameraBtn');
     if (modalCameraBtn && !modalCameraBtn.dataset.ocrBound) {
       modalCameraBtn.dataset.ocrBound = 'true';
-      modalCameraBtn.addEventListener('click', openCameraScanner);
+      modalCameraBtn.addEventListener('click', () => openOcrTipsModal('camera'));
     }
 
     const modalUploadBtn = document.getElementById('modalUploadBtn');
     if (modalUploadBtn && !modalUploadBtn.dataset.ocrBound) {
       modalUploadBtn.dataset.ocrBound = 'true';
-      modalUploadBtn.addEventListener('click', openFileUpload);
+      modalUploadBtn.addEventListener('click', () => openOcrTipsModal('upload'));
+    }
+
+    const closeBtn = document.getElementById('closeOcrTipsBtn');
+    if (closeBtn && !closeBtn.dataset.ocrBound) {
+      closeBtn.dataset.ocrBound = 'true';
+      closeBtn.addEventListener('click', closeOcrTipsModal);
+    }
+
+    const cancelBtn = document.getElementById('cancelOcrTipsBtn');
+    if (cancelBtn && !cancelBtn.dataset.ocrBound) {
+      cancelBtn.dataset.ocrBound = 'true';
+      cancelBtn.addEventListener('click', closeOcrTipsModal);
+    }
+
+    const proceedBtn = document.getElementById('proceedOcrTipsBtn');
+    if (proceedBtn && !proceedBtn.dataset.ocrBound) {
+      proceedBtn.dataset.ocrBound = 'true';
+      proceedBtn.addEventListener('click', proceedWithOcr);
+    }
+
+    const ocrTipsModal = document.getElementById('ocrTipsModal');
+    if (ocrTipsModal && !ocrTipsModal.dataset.ocrBound) {
+      ocrTipsModal.dataset.ocrBound = 'true';
+      ocrTipsModal.addEventListener('click', (e) => {
+        if (e.target === ocrTipsModal) closeOcrTipsModal();
+      });
     }
   };
 
@@ -768,6 +841,8 @@
   globalThis.OCR = {
     openCameraScanner,
     openFileUpload,
+    openOcrTipsModal,
+    closeOcrTipsModal,
     processReceiptFile
   };
 })();

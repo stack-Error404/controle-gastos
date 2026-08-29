@@ -1204,3 +1204,52 @@ body.dark .report-preview{background:rgba(255,255,255,.02)}
 .zoom-control button{min-height:44px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.08);color:var(--ink);font-family:var(--serif);font-size:1.1rem;font-weight:700;cursor:pointer}
 .zoom-control button:disabled{opacity:.35;cursor:default}.zoom-control strong{min-width:54px;text-align:center;font-family:"Courier New",monospace;color:var(--green)}
 .zoom-reset{display:block;margin:10px auto 0}.dark .pinned-notice{background:rgba(184,147,63,.06)}
+
+/* Modal Dicas de Leitura OCR */
+.ocr-tips-modal {
+  max-width: 440px;
+}
+.ocr-tips-intro {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.ocr-tips-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.ocr-tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+.ocr-tip-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ocr-tip-item strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.ocr-tip-item small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+.ocr-tips-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

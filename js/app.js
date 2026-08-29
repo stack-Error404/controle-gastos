@@ -1868,6 +1868,7 @@ document.addEventListener("keydown",e=>{
     if(!$("reportModal").hidden) closeReport();
     if(!$("cardModal").hidden) closeCardModal();
     if($("paletteModal") && !$("paletteModal").hidden) closePaletteModal();
+    if($("ocrTipsModal") && !$("ocrTipsModal").hidden && globalThis.OCR) globalThis.OCR.closeOcrTipsModal();
   }
 });
 
