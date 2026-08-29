@@ -256,8 +256,22 @@
         </div>
 
         <div class="ledger-results-meta">
-          <span id="resultsCount">0 lançamentos</span>
+          <div class="results-meta-left">
+            <span id="resultsCount">0 lançamentos</span>
+            <button type="button" class="text-action select-mode-btn" id="toggleSelectModeBtn">selecionar</button>
+          </div>
           <strong id="resultsTotal">R$ 0,00</strong>
+        </div>
+
+        <div class="selection-bar" id="selectionBar" hidden>
+          <div class="selection-bar-left">
+            <button type="button" class="text-action" id="selectAllBtn">Selecionar todos</button>
+            <span id="selectionCount">0 selecionados</span>
+          </div>
+          <div class="selection-bar-actions">
+            <button type="button" class="secondary-paper-button compact" id="cancelSelectBtn">Cancelar</button>
+            <button type="button" class="danger-paper-button compact" id="deleteSelectedBtn" disabled>Excluir (<span id="deleteCountBadge">0</span>)</button>
+          </div>
         </div>
 
         <div class="transaction-list" id="transactionList"></div>
@@ -611,7 +625,7 @@
 
         <div class="modal-actions">
           <button class="danger-text-button" type="button" id="deleteEntryBtn" hidden>Excluir</button>
-          <button class="primary-paper-button compact" type="submit">Carimbar lançamento</button>
+          <button class="primary-paper-button compact" type="submit" id="entrySubmitBtn">Carimbar lançamento</button>
         </div>
       </form>
     </section>

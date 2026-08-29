@@ -44,6 +44,8 @@ let ledgerSearch = "";
 let ledgerDayFilter = null;
 let cards = [];
 let recurringRules = [];
+let isSelectMode = false;
+let selectedEntryIds = new Set();
 
 const $ = id => document.getElementById(id);
 
@@ -135,10 +137,31 @@ function materializeRecurringMonth(monthKey){
   const key=entryStorageKey(monthKey);
   let monthEntries=safeArray(key);
   let changed=false;
+  const currentKey = todayISO().slice(0,7);
+  const ignoredKey = `lc:v3:ignoredRec:${monthKey}`;
+  const ignoredRules = safeArray(ignoredKey);
+
   recurringRules.filter(r=>r.active!==false && monthKey>=r.startDate.slice(0,7)).forEach(rule=>{
-    if(monthEntries.some(e=>e.recurringId===rule.id)) return;
+    if(monthEntries.some(e=>e.recurringId===rule.id) || ignoredRules.includes(rule.id)) return;
     const day=Math.min(Number(rule.day)||1,new Date(year,month,0).getDate());
-    monthEntries.push({id:uid("rec"),type:rule.type,description:rule.description,value:Number(rule.value),category:rule.category,date:`${monthKey}-${String(day).padStart(2,"0")}`,note:rule.note||"",paymentMethod:rule.paymentMethod||(rule.cardId?"credit":"unspecified"),cardId:rule.cardId||"",recurringId:rule.id,createdAt:Date.now()});
+    
+    // Contas fixas/recorrentes em meses futuros ou despesas iniciam como pendentes (a pagar)
+    const initialPaid = false;
+
+    monthEntries.push({
+      id: uid("rec"),
+      type: rule.type,
+      description: rule.description,
+      value: Number(rule.value),
+      category: rule.category,
+      date: `${monthKey}-${String(day).padStart(2,"0")}`,
+      note: rule.note||"",
+      paymentMethod: rule.paymentMethod||(rule.cardId?"credit":"unspecified"),
+      cardId: rule.cardId||"",
+      recurringId: rule.id,
+      paid: initialPaid,
+      createdAt: Date.now()
+    });
     changed=true;
   });
   if(changed) localStorage.setItem(key,JSON.stringify(monthEntries));
@@ -164,6 +187,7 @@ function migrateLegacyMonth(monthKey){
       category: item.category || "Outros",
       date: item.date || `${monthKey}-01`,
       note: "",
+      paid: true,
       createdAt: Date.now()
     })).filter(item=>item.value > 0);
 
@@ -178,10 +202,36 @@ function loadEntriesForMonth(monthKey){
   try{
     const raw = localStorage.getItem(entryStorageKey(monthKey));
     const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
+    if(!Array.isArray(arr)) return [];
+    const currentKey = todayISO().slice(0,7);
+
+    // Normaliza status de pagamento para meses futuros ou contas fixas antigas
+    return arr.map(e=>{
+      if(typeof e.paid !== "boolean"){
+        if(monthKey > currentKey || e.recurringId){
+          e.paid = false;
+        } else {
+          e.paid = true;
+        }
+      }
+      return e;
+    });
   }catch{
     return [];
   }
+}
+
+function deleteEntryById(id, monthKey = getMonthKey()){
+  const entry = entries.find(e => e.id === id);
+  if(entry && entry.recurringId){
+    const ignoredKey = `lc:v3:ignoredRec:${monthKey}`;
+    let ignored = safeArray(ignoredKey);
+    if(!ignored.includes(entry.recurringId)){
+      ignored.push(entry.recurringId);
+      localStorage.setItem(ignoredKey, JSON.stringify(ignored));
+    }
+  }
+  entries = entries.filter(e => e.id !== id);
 }
 
 function loadMonthData(){
@@ -480,6 +530,13 @@ function debounce(fn, delay) {
   };
 }
 
+function updateSelectionUI(){
+  const count = selectedEntryIds.size;
+  if($("selectionCount")) $("selectionCount").textContent = `${count} selecionado${count===1?"":"s"}`;
+  if($("deleteCountBadge")) $("deleteCountBadge").textContent = count;
+  if($("deleteSelectedBtn")) $("deleteSelectedBtn").disabled = count === 0;
+}
+
 function renderTransactions(){
   const list = $("transactionList");
   const filtered = filteredTransactions();
@@ -496,8 +553,13 @@ function renderTransactions(){
     $("activeFilterNote").hidden = true;
   }
 
+  if(list){
+    list.classList.toggle("ledger-selecting", isSelectMode);
+  }
+
   if(!filtered.length){
     list.innerHTML = `<div class="empty-state">Nenhum lançamento encontrado com esses filtros.</div>`;
+    updateSelectionUI();
     return;
   }
 
@@ -510,9 +572,10 @@ function renderTransactions(){
     const isPaid = e.paid !== false;
     const stampText = isPaid ? "✓ PAGO" : "⏳ A PAGAR";
     const stampClass = isPaid ? "paid" : "pending";
+    const isSelected = selectedEntryIds.has(e.id);
 
     return `
-      <div class="tx-row" data-entry-id="${escapeHtml(e.id)}">
+      <div class="tx-row ${isSelected ? 'selected' : ''}" data-entry-id="${escapeHtml(e.id)}">
         <div class="tx-swipe-action tx-action-left">
           <button type="button" class="tx-swipe-btn" data-swipe-edit="${escapeHtml(e.id)}" aria-label="Editar">
             <span>✎</span>
@@ -521,6 +584,9 @@ function renderTransactions(){
         </div>
 
         <article class="tx" data-entry-id="${escapeHtml(e.id)}">
+          <label class="tx-check" onclick="event.stopPropagation()">
+            <input type="checkbox" data-select-id="${escapeHtml(e.id)}" ${isSelected ? 'checked' : ''}>
+          </label>
           <div class="tx-date"><strong>${d}</strong>${monthShort}</div>
           <div class="tx-info">
             <div class="tx-title-row">
@@ -542,6 +608,8 @@ function renderTransactions(){
         </div>
       </div>`;
   }).join("");
+
+  updateSelectionUI();
 }
 
 function renderCategoryControls(){
@@ -763,6 +831,7 @@ function openEntryModal(entry=null,defaultDate=null){
 
   if(entry){
     $("entryModalTitle").textContent = "Editar lançamento";
+    if($("entrySubmitBtn")) $("entrySubmitBtn").textContent = "Salvar alterações";
     $("entryId").value = entry.id;
     $("entryDescription").value = entry.description;
     $("entryValue").value = entry.value;
@@ -786,6 +855,7 @@ function openEntryModal(entry=null,defaultDate=null){
     $("deleteEntryBtn").hidden = false;
   }else{
     $("entryModalTitle").textContent = "Novo lançamento";
+    if($("entrySubmitBtn")) $("entrySubmitBtn").textContent = "Carimbar lançamento";
     $("entryForm").reset();
     $("entryId").value = "";
     if($("entryPaid")) $("entryPaid").checked = true;
@@ -842,10 +912,30 @@ function saveEntryFromForm(event){
   }
   if(paymentMethod==="credit" && !cardId){ showToast("Selecione ou cadastre um cartão de crédito."); return; }
 
+  let existingRecurringId = "";
+  let existingCreatedAt = Date.now();
+  if(id){
+    const existing = entries.find(e=>e.id===id);
+    if(existing){
+      existingRecurringId = existing.recurringId || "";
+      existingCreatedAt = existing.createdAt || Date.now();
+    }
+  }
+
   const entryMonth = date.slice(0,7);
   const newEntry = {
     id:id || `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    type,description,value,category,date,note,paymentMethod,cardId,paid,createdAt:Date.now()
+    type,
+    description,
+    value,
+    category,
+    date,
+    note,
+    paymentMethod,
+    cardId,
+    paid,
+    recurringId: existingRecurringId,
+    createdAt: existingCreatedAt
   };
 
   if(makeRecurring){
@@ -856,7 +946,6 @@ function saveEntryFromForm(event){
   if(entryMonth===getMonthKey()){
     const idx = entries.findIndex(e=>e.id===id);
     if(idx>=0){
-      newEntry.createdAt = entries[idx].createdAt || Date.now();
       entries[idx] = newEntry;
     }else{
       entries.push(newEntry);
@@ -890,7 +979,7 @@ function saveEntryFromForm(event){
   void stamp.offsetWidth;
   stamp.classList.add("stamp-hit");
 
-  showToast(id ? "Lançamento atualizado." : "Lançamento registrado.");
+  showToast(id ? "Alterações salvas." : "Lançamento registrado.");
 }
 
 function deleteCurrentEntry(){
@@ -898,10 +987,10 @@ function deleteCurrentEntry(){
   if(!id) return;
   if(!confirm("Excluir este lançamento?")) return;
 
-  entries = entries.filter(e=>e.id!==id);
+  deleteEntryById(id, getMonthKey());
   saveMonthData();
   closeEntryModal();
-  renderAll();
+  loadMonthData();
   showToast("Lançamento excluído.");
 }
 
@@ -1372,7 +1461,58 @@ function toggleEntryPaid(entryId, e = null){
   }
 }
 
-/* Gestos de Arrastar pro Lado (Swipe estilo Gmail) */
+/* Gestos de Arrastar pro Lado (Swipe estilo Gmail) & Seleção */
+function toggleSelectMode(){
+  isSelectMode = !isSelectMode;
+  selectedEntryIds.clear();
+  if($("selectionBar")) $("selectionBar").hidden = !isSelectMode;
+  if($("toggleSelectModeBtn")) $("toggleSelectModeBtn").textContent = isSelectMode ? "cancelar" : "selecionar";
+  renderTransactions();
+}
+
+function exitSelectMode(){
+  isSelectMode = false;
+  selectedEntryIds.clear();
+  if($("selectionBar")) $("selectionBar").hidden = true;
+  if($("toggleSelectModeBtn")) $("toggleSelectModeBtn").textContent = "selecionar";
+  renderTransactions();
+}
+
+function toggleEntrySelection(id){
+  if(selectedEntryIds.has(id)){
+    selectedEntryIds.delete(id);
+  }else{
+    selectedEntryIds.add(id);
+  }
+  renderTransactions();
+}
+
+function selectAllFilteredEntries(){
+  const filtered = filteredTransactions();
+  if(selectedEntryIds.size === filtered.length){
+    selectedEntryIds.clear();
+  }else{
+    filtered.forEach(e => selectedEntryIds.add(e.id));
+  }
+  renderTransactions();
+}
+
+function deleteSelectedEntries(){
+  if(selectedEntryIds.size === 0) return;
+  const count = selectedEntryIds.size;
+  if(!confirm(`Excluir os ${count} lançamento${count===1?"":"s"} selecionado${count===1?"":"s"}?`)) return;
+
+  const monthKey = getMonthKey();
+  selectedEntryIds.forEach(id => {
+    deleteEntryById(id, monthKey);
+  });
+
+  saveMonthData();
+  exitSelectMode();
+  loadMonthData();
+  showToast(`${count} lançamento${count===1?"":"s"} excluído${count===1?"":"s"}.`);
+}
+
 function setupSwipeGestures(){
   const list = $("transactionList");
   if(!list || list._swipeBound) return;
@@ -1395,9 +1535,11 @@ function setupSwipeGestures(){
   };
 
   const handleStart = (clientX, clientY, target)=>{
+    if(isSelectMode) return;
+    if(target.closest("[data-toggle-paid]") || target.closest(".tx-swipe-btn") || target.closest(".tx-swipe-action") || target.closest(".tx-check")) return;
+
     const tx = target.closest(".tx");
     if(!tx) return;
-    if(target.closest("[data-toggle-paid]") || target.closest(".tx-swipe-btn")) return;
 
     activeTx = tx;
     startX = clientX;
@@ -1410,7 +1552,7 @@ function setupSwipeGestures(){
   };
 
   const handleMove = (clientX, clientY)=>{
-    if(!activeTx) return;
+    if(isSelectMode || !activeTx) return;
     const diffX = clientX - startX;
     const diffY = clientY - startY;
 
@@ -1469,10 +1611,11 @@ function setupSwipeGestures(){
   list.addEventListener("touchend", handleEnd);
   list.addEventListener("touchcancel", handleEnd);
 
-  // Mouse / Pointer drag support for desktop
+  // Mouse drag support para testes no desktop
   let isMouseDown = false;
   list.addEventListener("mousedown", e=>{
-    if(e.button !== 0) return;
+    if(e.button !== 0 || isSelectMode) return;
+    if(e.target.closest(".tx-swipe-action") || e.target.closest(".tx-swipe-btn") || e.target.closest("[data-toggle-paid]") || e.target.closest(".tx-check")) return;
     isMouseDown = true;
     handleStart(e.clientX, e.clientY, e.target);
   });
@@ -1487,6 +1630,16 @@ function setupSwipeGestures(){
   });
 
   list.addEventListener("click", e=>{
+    // Modo de seleção múltipla
+    if(isSelectMode){
+      const row = e.target.closest("[data-entry-id]");
+      if(row){
+        toggleEntrySelection(row.dataset.entryId);
+      }
+      return;
+    }
+
+    // Alternar carimbo Pago / A Pagar
     const stampBtn = e.target.closest("[data-toggle-paid]");
     if(stampBtn){
       e.stopPropagation();
@@ -1494,6 +1647,7 @@ function setupSwipeGestures(){
       return;
     }
 
+    // Botão Editar do Swipe
     const editBtn = e.target.closest("[data-swipe-edit]");
     if(editBtn){
       e.stopPropagation();
@@ -1503,13 +1657,14 @@ function setupSwipeGestures(){
       return;
     }
 
+    // Botão Apagar do Swipe
     const deleteBtn = e.target.closest("[data-swipe-delete]");
     if(deleteBtn){
       e.stopPropagation();
       const id = deleteBtn.dataset.swipeDelete;
       closeActiveSwipe();
       if(confirm("Excluir este lançamento?")){
-        entries = entries.filter(item => item.id !== id);
+        deleteEntryById(id, getMonthKey());
         saveMonthData();
         loadMonthData();
         showToast("Lançamento excluído.");
@@ -1592,6 +1747,12 @@ document.querySelectorAll(".segment").forEach(btn=>{
 
 $("entryForm").addEventListener("submit",saveEntryFromForm);
 $("deleteEntryBtn").addEventListener("click",deleteCurrentEntry);
+
+// Seleção múltipla no Livro
+$("toggleSelectModeBtn")?.addEventListener("click", toggleSelectMode);
+$("cancelSelectBtn")?.addEventListener("click", exitSelectMode);
+$("selectAllBtn")?.addEventListener("click", selectAllFilteredEntries);
+$("deleteSelectedBtn")?.addEventListener("click", deleteSelectedEntries);
 
 document.querySelectorAll(".type-tab").forEach(btn=>{
   btn.addEventListener("click",()=>{
@@ -1695,6 +1856,7 @@ $("categoryChips").addEventListener("click",e=>{
 
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
+    if(isSelectMode) exitSelectMode();
     if(!$("entryModal").hidden) closeEntryModal();
     if(!$("budgetModal").hidden) closeBudgetModal();
     if(!$("reportModal").hidden) closeReport();
