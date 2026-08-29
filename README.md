@@ -1,4 +1,4 @@
-# Livro Caixa — V4.1.0
+# Livro Caixa — V4.0.1
 
 Aplicativo web/PWA de controle financeiro pessoal.
 
@@ -12,6 +12,7 @@ Aplicativo web/PWA de controle financeiro pessoal.
 - carimbo visual de status **PAGO** / **A PAGAR**;
 - gestos de arrastar para o lado estilo Gmail (Swipe para Editar ou Excluir);
 - seletor de paletas de cores e temas visuais (6 temas completos);
+- seleção múltipla para exclusão em lote no livro de lançamentos;
 - pesquisa e filtros avançados (incluindo filtro por situação pago/pendente);
 - comparativo mensal;
 - gráficos e estatísticas;
@@ -35,9 +36,9 @@ Os dados ficam no `localStorage` do navegador de cada usuário. O GitHub hospeda
 Envie o conteúdo desta pasta para a raiz do repositório e mantenha o GitHub Pages publicado pela branch `main` em `/ (root)`.
 
 ## Atualização
-O service worker usa o cache `livro-caixa-v4.1.0`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
+O service worker usa o cache `livro-caixa-v4.0.1`. Ao publicar uma atualização futura, altere o nome do cache para garantir renovação dos arquivos.
 
-## Novidades 4.1.0
+## Novidades 4.0.1
 - **Carimbo "PAGO" e "A PAGAR"**: identificação visual no estilo clássico com toque direto para alternar a liquidação de qualquer conta;
 - **Filtro por Situação**: novo filtro no Livro de Lançamentos para listar apenas contas pagas ou pendentes a pagar;
 - **Gestos de Swipe (estilo Gmail)**: arraste qualquer lançamento para a direita para **Editar** ou para a esquerda para **Apagar** rapidamente;

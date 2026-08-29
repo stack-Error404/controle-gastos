@@ -1056,7 +1056,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "4.0.0",
+    version: "4.0.1",
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
@@ -1302,14 +1302,18 @@ function updatePwaStatus(){
 }
 
 async function refreshApp(){
-  showToast("Buscando atualização…");
+  showToast("Buscando atualização e limpando cache…");
   try{
     if("serviceWorker" in navigator){
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r=>r.update()));
     }
+    if("caches" in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
   }catch{}
-  setTimeout(()=>location.reload(),500);
+  setTimeout(()=>location.reload(),400);
 }
 
 function applyTextZoom(value,announce=false){

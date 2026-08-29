@@ -1,4 +1,4 @@
-const CACHE = "livro-caixa-v4.1.0-update2";
+const CACHE = "livro-caixa-v4.0.1";
 const APP_SHELL = [
   "./",
   "./index.html",
