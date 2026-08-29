@@ -216,6 +216,27 @@ function saveCards(){ localStorage.setItem(KEYS.cards,JSON.stringify(cards)); }
 function saveRecurring(){ localStorage.setItem(KEYS.recurring,JSON.stringify(recurringRules)); }
 function uid(prefix="id"){ return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`; }
 
+function stopRecurringRule(ruleId,lastMonthKey){
+  const rule=recurringRules.find(item=>item.id===ruleId);
+  if(rule) rule.active=false;
+
+  const keys = [];
+  for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)||"");
+  keys.forEach(key=>{
+    if(!key.startsWith(KEYS.entriesPrefix)) return;
+    const monthKey=key.slice(KEYS.entriesPrefix.length);
+    if(!isValidMonthKey(monthKey) || monthKey<=lastMonthKey) return;
+
+    const monthEntries=safeArray(key);
+    const kept=monthEntries.filter(entry=>entry.recurringId!==ruleId);
+    if(kept.length!==monthEntries.length){
+      localStorage.setItem(key,JSON.stringify(kept));
+    }
+  });
+
+  saveRecurring();
+}
+
 function materializeRecurringMonth(monthKey){
   const [year,month]=monthKey.split("-").map(Number);
   const key=entryStorageKey(monthKey);
@@ -970,12 +991,12 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryCard").value = entry.cardId || "";
     updateCardField();
     if($("entryPaid")) $("entryPaid").checked = entry.paid !== false;
-    const isRecurring = Boolean(entry.recurringId);
+    const recurringRule = recurringRules.find(rule=>rule.id===entry.recurringId);
+    const isRecurring = Boolean(recurringRule && recurringRule.active!==false);
     $("entryRecurring").checked = isRecurring;
 
-    // Lançamentos comuns podem ser convertidos em fixos durante a edição.
-    // Recorrências existentes continuam sendo gerenciadas na área de planejamento.
-    $("recurringField").hidden = isRecurring;
+    // Permite ativar ou encerrar a recorrência ao editar um lançamento.
+    $("recurringField").hidden = false;
     setEntryType(entry.type);
 
     if(!categories.includes(entry.category)){
@@ -1073,6 +1094,9 @@ function saveEntryFromForm(event){
   if(makeRecurring && !existingRecurringId){
     const rule={id:uid("rule"),type,description,value,category,note,paymentMethod,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
     recurringRules.push(rule); saveRecurring(); newEntry.recurringId=rule.id;
+  }else if(!makeRecurring && existingRecurringId){
+    stopRecurringRule(existingRecurringId,entryMonth);
+    newEntry.recurringId="";
   }
 
   if(entryMonth===getMonthKey()){
@@ -1111,7 +1135,14 @@ function saveEntryFromForm(event){
   void stamp.offsetWidth;
   stamp.classList.add("stamp-hit");
 
-  showToast(id && makeRecurring && !existingRecurringId ? "Lançamento convertido em fixo mensal." : id ? "Alterações salvas." : "Lançamento registrado.");
+  const recurrenceEnabled = id && makeRecurring && !existingRecurringId;
+  const recurrenceDisabled = id && !makeRecurring && existingRecurringId;
+  showToast(recurrenceEnabled
+    ? "Lançamento convertido em fixo mensal."
+    : recurrenceDisabled
+      ? "Recorrência removida dos próximos meses."
+      : id ? "Alterações salvas." : "Lançamento registrado."
+  );
 }
 
 function deleteCurrentEntry(){
@@ -1513,14 +1544,8 @@ $("deleteCardBtn").addEventListener("click",()=>{
 });
 $("recurringList").addEventListener("click",e=>{
   const btn=e.target.closest("[data-stop-recurring]"); if(!btn||!confirm("Cancelar os próximos lançamentos desta conta fixa?")) return;
-  const rule=recurringRules.find(r=>r.id===btn.dataset.stopRecurring); if(rule) rule.active=false;
-  const currentKey=getMonthKey();
-  for(let i=0;i<localStorage.length;i++){
-    const key=localStorage.key(i)||""; if(!key.startsWith(KEYS.entriesPrefix)) continue;
-    const monthKey=key.slice(KEYS.entriesPrefix.length); if(monthKey<=currentKey) continue;
-    const kept=safeArray(key).filter(entry=>entry.recurringId!==btn.dataset.stopRecurring); localStorage.setItem(key,JSON.stringify(kept));
-  }
-  saveRecurring(); renderPlanning(); showToast("Recorrência cancelada.");
+  stopRecurringRule(btn.dataset.stopRecurring,getMonthKey());
+  renderPlanning(); showToast("Recorrência cancelada.");
 });
 
 window.addEventListener("online",updatePwaStatus);
