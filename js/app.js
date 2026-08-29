@@ -207,16 +207,19 @@ function loadEntriesForMonth(monthKey){
 
     // Normaliza status de pagamento: meses futuros sempre iniciam como pendentes (A PAGAR)
     return arr.map(e=>{
+      // Criar cópia do item para evitar modificações diretas no localStorage
+      const entry = {...e};
+
       if(monthKey > currentKey){
-        if(e.recurringId || typeof e.paid !== "boolean"){
-          e.paid = false;
+        if(entry.recurringId || typeof entry.paid !== "boolean"){
+          entry.paid = false;
         }
       } else {
-        if(typeof e.paid !== "boolean"){
-          e.paid = e.recurringId ? false : true;
+        if(typeof entry.paid !== "boolean"){
+          entry.paid = entry.recurringId ? false : true;
         }
       }
-      return e;
+      return entry;
     });
   }catch{
     return [];
@@ -1456,7 +1459,7 @@ function toggleEntryPaid(entryId, e = null){
   }
   const entry = entries.find(item => item.id === entryId);
   if(!entry) return;
-  entry.paid = entry.paid === false ? true : false;
+  entry.paid = !(entry.paid === false);
   saveMonthData();
   renderTransactions();
 
