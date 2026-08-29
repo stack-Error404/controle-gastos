@@ -624,7 +624,19 @@
         }
       });
 
-      const { data: { text = '' } = {} } = await worker.recognize(imageOrCanvas);
+      await worker.setParameters({
+        tessedit_pageseg_mode: '6'
+      });
+
+      let res = await worker.recognize(imageOrCanvas);
+      let text = (res && res.data && res.data.text) || '';
+
+      if (text.trim().length < 20) {
+        await worker.setParameters({ tessedit_pageseg_mode: '3' });
+        res = await worker.recognize(imageOrCanvas);
+        text = (res && res.data && res.data.text) || text;
+      }
+
       const lines = text
         .split(/\r?\n/)
         .map((line) => line.replace(/\s+/g, ' ').trim())
