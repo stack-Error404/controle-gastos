@@ -289,19 +289,14 @@ function loadEntriesForMonth(monthKey){
     if(!Array.isArray(arr)) return [];
     const currentKey = todayISO().slice(0,7);
 
-    // Normaliza status de pagamento: meses futuros sempre iniciam como pendentes (A PAGAR)
+    // Preserva o estado já escolhido. Apenas dados antigos sem status recebem um padrão.
     return arr.map(e=>{
       // Criar cópia do item para evitar modificações diretas no localStorage
       const entry = {...e};
 
-      if(monthKey > currentKey){
-        if(entry.recurringId || typeof entry.paid !== "boolean"){
-          entry.paid = false;
-        }
-      } else {
-        if(typeof entry.paid !== "boolean"){
-          entry.paid = entry.recurringId ? false : true;
-        }
+      if(typeof entry.paid !== "boolean"){
+        const isFutureMonth = monthKey > currentKey;
+        entry.paid = isFutureMonth || entry.recurringId ? false : true;
       }
       return entry;
     });
