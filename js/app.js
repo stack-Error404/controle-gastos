@@ -970,9 +970,12 @@ function openEntryModal(entry=null,defaultDate=null){
     $("entryCard").value = entry.cardId || "";
     updateCardField();
     if($("entryPaid")) $("entryPaid").checked = entry.paid !== false;
-    $("entryRecurring").checked = false;
+    const isRecurring = Boolean(entry.recurringId);
+    $("entryRecurring").checked = isRecurring;
 
-    $("recurringField").hidden = true;
+    // Lançamentos comuns podem ser convertidos em fixos durante a edição.
+    // Recorrências existentes continuam sendo gerenciadas na área de planejamento.
+    $("recurringField").hidden = isRecurring;
     setEntryType(entry.type);
 
     if(!categories.includes(entry.category)){
@@ -1032,7 +1035,7 @@ function saveEntryFromForm(event){
   const id = $("entryId").value;
   const paymentMethod = $("entryPayment").value;
   const cardId = paymentMethod==="credit" ? $("entryCard").value : "";
-  const makeRecurring = $("entryRecurring").checked && !id;
+  const makeRecurring = $("entryRecurring").checked;
   const paid = $("entryPaid") ? $("entryPaid").checked : true;
 
   if(!description || !date || !category || !Number.isFinite(value) || value<=0){
@@ -1067,7 +1070,7 @@ function saveEntryFromForm(event){
     createdAt: existingCreatedAt
   };
 
-  if(makeRecurring){
+  if(makeRecurring && !existingRecurringId){
     const rule={id:uid("rule"),type,description,value,category,note,paymentMethod,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
     recurringRules.push(rule); saveRecurring(); newEntry.recurringId=rule.id;
   }
@@ -1108,7 +1111,7 @@ function saveEntryFromForm(event){
   void stamp.offsetWidth;
   stamp.classList.add("stamp-hit");
 
-  showToast(id ? "Alterações salvas." : "Lançamento registrado.");
+  showToast(id && makeRecurring && !existingRecurringId ? "Lançamento convertido em fixo mensal." : id ? "Alterações salvas." : "Lançamento registrado.");
 }
 
 function deleteCurrentEntry(){
