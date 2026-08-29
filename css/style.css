@@ -156,6 +156,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .stamp-income{color:#3e7358}
 .stamp-expense{color:var(--red)}
 .stamp.stamp-hit{animation:stampHit .34s ease}
+.stamp-expense.budget-warning{
+  animation:expenseBudgetShake 3.2s ease-in-out infinite;
+  box-shadow:0 0 0 4px rgba(166,52,42,.08),0 5px 18px rgba(166,52,42,.22);
+}
+.stamp-expense.budget-warning .stamp-ring{opacity:.82}
 
 .ledger-card{position:relative;z-index:1;padding:16px 0 18px;border-top:1px dotted var(--line)}
 .ledger-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
@@ -949,6 +954,14 @@ body.dark .modal-ocr-section,body[class*="-dark"] .modal-ocr-section{background:
   45%{transform:scale(.92) rotate(-5deg)}
   70%{transform:scale(1.06) rotate(-2deg)}
   100%{transform:scale(1) rotate(-3deg)}
+}
+@keyframes expenseBudgetShake{
+  0%,18%,100%{transform:translateX(0) rotate(-1deg)}
+  3%{transform:translateX(-3px) rotate(-3deg) scale(1.02)}
+  6%{transform:translateX(3px) rotate(1deg) scale(1.02)}
+  9%{transform:translateX(-2px) rotate(-2deg) scale(1.01)}
+  12%{transform:translateX(2px) rotate(0deg) scale(1.01)}
+  15%{transform:translateX(0) rotate(-1deg)}
 }
 @keyframes modalUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
 

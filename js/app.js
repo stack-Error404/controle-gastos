@@ -505,6 +505,14 @@ function renderComparison(){
 function renderBudget(){
   const budget = getBudget();
   const expense = totals().expense;
+  const expenseStamp = $("expenseStamp");
+  const percent = budget ? (expense/budget)*100 : 0;
+  const isNearLimit = budget>0 && percent>=90;
+
+  expenseStamp.classList.toggle("budget-warning",isNearLimit);
+  expenseStamp.title = isNearLimit
+    ? `Atenção: ${Math.round(percent)}% do limite mensal utilizado.`
+    : "";
 
   $("budgetSpent").textContent = `${formatBRL(expense)} gastos`;
   $("budgetLimit").textContent = budget ? `de ${formatBRL(budget)}` : "Sem limite";
@@ -518,7 +526,6 @@ function renderBudget(){
     return;
   }
 
-  const percent = (expense/budget)*100;
   $("budgetBar").style.width = `${Math.min(percent,100)}%`;
   $("budgetBar").classList.toggle("over", percent>100);
   $("budgetPercent").textContent = `${Math.round(percent)}% utilizado`;
@@ -1091,12 +1098,32 @@ function saveEntryFromForm(event){
     createdAt: existingCreatedAt
   };
 
-  if(makeRecurring && !existingRecurringId){
-    const rule={id:uid("rule"),type,description,value,category,note,paymentMethod,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
-    recurringRules.push(rule); saveRecurring(); newEntry.recurringId=rule.id;
+  let recurrenceEnabled = false;
+  let recurrenceDisabled = false;
+
+  if(makeRecurring){
+    const activeRule=recurringRules.find(rule=>rule.id===existingRecurringId && rule.active!==false);
+    if(activeRule){
+      newEntry.recurringId=activeRule.id;
+    }else{
+      if(existingRecurringId){
+        stopRecurringRule(existingRecurringId,entryMonth);
+      }
+      const rule={id:uid("rule"),type,description,value,category,note,paymentMethod,cardId,day:Number(date.slice(8,10)),startDate:date,active:true,createdAt:Date.now()};
+      recurringRules.push(rule);
+      saveRecurring();
+      newEntry.recurringId=rule.id;
+      recurrenceEnabled=true;
+    }
+
+    // Meses já criados recebem a nova recorrência imediatamente.
+    availableMonthKeys()
+      .filter(monthKey=>monthKey>entryMonth)
+      .forEach(materializeRecurringMonth);
   }else if(!makeRecurring && existingRecurringId){
     stopRecurringRule(existingRecurringId,entryMonth);
     newEntry.recurringId="";
+    recurrenceDisabled=true;
   }
 
   if(entryMonth===getMonthKey()){
@@ -1135,11 +1162,9 @@ function saveEntryFromForm(event){
   void stamp.offsetWidth;
   stamp.classList.add("stamp-hit");
 
-  const recurrenceEnabled = id && makeRecurring && !existingRecurringId;
-  const recurrenceDisabled = id && !makeRecurring && existingRecurringId;
-  showToast(recurrenceEnabled
+  showToast(id && recurrenceEnabled
     ? "Lançamento convertido em fixo mensal."
-    : recurrenceDisabled
+    : id && recurrenceDisabled
       ? "Recorrência removida dos próximos meses."
       : id ? "Alterações salvas." : "Lançamento registrado."
   );
