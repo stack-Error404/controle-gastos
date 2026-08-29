@@ -205,13 +205,15 @@ function loadEntriesForMonth(monthKey){
     if(!Array.isArray(arr)) return [];
     const currentKey = todayISO().slice(0,7);
 
-    // Normaliza status de pagamento para meses futuros ou contas fixas antigas
+    // Normaliza status de pagamento: meses futuros sempre iniciam como pendentes (A PAGAR)
     return arr.map(e=>{
-      if(typeof e.paid !== "boolean"){
-        if(monthKey > currentKey || e.recurringId){
+      if(monthKey > currentKey){
+        if(e.recurringId || typeof e.paid !== "boolean"){
           e.paid = false;
-        } else {
-          e.paid = true;
+        }
+      } else {
+        if(typeof e.paid !== "boolean"){
+          e.paid = e.recurringId ? false : true;
         }
       }
       return e;
@@ -1867,7 +1869,9 @@ document.addEventListener("keydown",e=>{
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+    navigator.serviceWorker.register("./service-worker.js").then(reg=>{
+      reg.update();
+    }).catch(()=>{});
   });
 }
 

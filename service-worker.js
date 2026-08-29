@@ -1,4 +1,4 @@
-const CACHE = "livro-caixa-v4.1.0";
+const CACHE = "livro-caixa-v4.1.0-update2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -11,49 +11,42 @@ const APP_SHELL = [
   "./assets/icon-512.png"
 ];
 
-self.addEventListener("install",event=>{
-  event.waitUntil(
-    caches.open(CACHE).then(cache=>cache.addAll(APP_SHELL))
-  );
+self.addEventListener("install", event => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(APP_SHELL))
+  );
 });
 
-self.addEventListener("activate",event=>{
+self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys=>
-      Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
-self.addEventListener("fetch",event=>{
+// Estratégia Network-First para garantir que novas atualizações entrem no ar na hora
+self.addEventListener("fetch", event => {
   const req = event.request;
-  if(req.method!=="GET") return;
-
-  if(req.mode==="navigate"){
-    event.respondWith(
-      fetch(req)
-        .then(response=>{
-          const copy = response.clone();
-          caches.open(CACHE).then(cache=>cache.put("./index.html",copy));
-          return response;
-        })
-        .catch(()=>caches.match("./index.html"))
-    );
-    return;
-  }
+  if (req.method !== "GET") return;
 
   event.respondWith(
-    caches.match(req).then(cached=>{
-      if(cached) return cached;
-      return fetch(req).then(response=>{
-        if(response && response.status===200 && response.type==="basic"){
+    fetch(req)
+      .then(response => {
+        if (response && response.status === 200 && (response.type === "basic" || response.type === "cors")) {
           const copy = response.clone();
-          caches.open(CACHE).then(cache=>cache.put(req,copy));
+          caches.open(CACHE).then(cache => cache.put(req, copy));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(req).then(cached => {
+          if (cached) return cached;
+          if (req.mode === "navigate") return caches.match("./index.html");
+          return null;
+        });
+      })
   );
 });
