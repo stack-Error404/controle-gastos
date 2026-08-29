@@ -106,6 +106,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   font-size:34px;line-height:1;cursor:pointer;border-radius:50%;
 }
 .month-arrow:active{background:rgba(47,111,78,.08)}
+.month-arrow:disabled{opacity:.22;cursor:not-allowed}
+.month-arrow:disabled:active{background:transparent}
 .month-copy{text-align:center}
 .month-copy small{
   display:block;font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;
@@ -114,6 +116,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .month-copy strong{
   display:block;margin-top:2px;font-size:21px;text-transform:capitalize;font-weight:600;
 }
+.month-create-row{position:relative;z-index:1;display:flex;justify-content:center;margin:-7px 0 15px}
+.create-month-button{
+  border:1px solid rgba(47,111,78,.38);border-radius:999px;background:rgba(47,111,78,.06);
+  color:var(--green);padding:7px 13px;font-family:Arial,sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+}
+.create-month-button:hover{background:rgba(47,111,78,.12)}
+.create-month-button:active{transform:translateY(1px)}
+.create-month-button[hidden]{display:none}
 .ledger-rule{
   position:relative;z-index:1;display:flex;align-items:center;gap:10px;color:var(--ink-soft);
   font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:9px;margin:0 0 20px;

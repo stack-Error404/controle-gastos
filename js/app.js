@@ -19,7 +19,9 @@ const KEYS = {
   lastBackup: "lc:v3:lastBackup",
   cards: "lc:v3:cards",
   recurring: "lc:v3:recurring",
-  textZoom: "lc:v3:textZoom"
+  textZoom: "lc:v3:textZoom",
+  createdMonths: "lc:v4:createdMonths",
+  monthNavigationMigration: "lc:v4:monthNavigationV1"
 };
 const PAYMENT_LABELS={cash:"Dinheiro",pix:"Pix",debit:"Cartão de débito",credit:"Cartão de crédito",crypto:"Criptomoeda",unspecified:"Não informado"};
 
@@ -95,6 +97,20 @@ function budgetStorageKey(monthKey=getMonthKey()){
   return KEYS.budgetPrefix + monthKey;
 }
 
+function isValidMonthKey(value){
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||""));
+}
+
+function dateFromMonthKey(monthKey){
+  const [year,month] = monthKey.split("-").map(Number);
+  return new Date(year,month-1,1);
+}
+
+function offsetMonthKey(monthKey,delta){
+  const date = dateFromMonthKey(monthKey);
+  return dateKey(new Date(date.getFullYear(),date.getMonth()+delta,1));
+}
+
 function showToast(message){
   const toast = $("toast");
   toast.textContent = message;
@@ -122,6 +138,74 @@ function saveCategories(){
 function safeArray(key){
   try{ const value=JSON.parse(localStorage.getItem(key)||"[]"); return Array.isArray(value)?value:[]; }
   catch{ return []; }
+}
+
+function explicitlyCreatedMonths(){
+  return safeArray(KEYS.createdMonths).filter(isValidMonthKey);
+}
+
+function saveExplicitlyCreatedMonths(months){
+  const unique = [...new Set(months.filter(isValidMonthKey))].sort();
+  localStorage.setItem(KEYS.createdMonths,JSON.stringify(unique));
+}
+
+function storedMonthKeys(){
+  const months = new Set();
+  for(let i=0;i<localStorage.length;i++){
+    const key = localStorage.key(i)||"";
+    let monthKey = "";
+    if(key.startsWith(KEYS.entriesPrefix)) monthKey = key.slice(KEYS.entriesPrefix.length);
+    else if(key.startsWith(KEYS.budgetPrefix)) monthKey = key.slice(KEYS.budgetPrefix.length);
+    else if(key.startsWith("expenses:")) monthKey = key.slice("expenses:".length);
+    if(isValidMonthKey(monthKey)) months.add(monthKey);
+  }
+  return [...months];
+}
+
+function monthHasSavedData(monthKey){
+  return localStorage.getItem(entryStorageKey(monthKey)) !== null ||
+    localStorage.getItem(budgetStorageKey(monthKey)) !== null ||
+    localStorage.getItem(`expenses:${monthKey}`) !== null;
+}
+
+function availableMonthKeys(){
+  const months = new Set([
+    todayISO().slice(0,7),
+    ...storedMonthKeys(),
+    ...explicitlyCreatedMonths()
+  ]);
+  return [...months].filter(isValidMonthKey).sort();
+}
+
+function cleanupLegacyAutoCreatedFutureMonths(){
+  if(localStorage.getItem(KEYS.monthNavigationMigration)) return;
+
+  const currentKey = todayISO().slice(0,7);
+  const keys = [];
+  for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)||"");
+
+  keys.forEach(key=>{
+    if(!key.startsWith(KEYS.entriesPrefix)) return;
+    const monthKey = key.slice(KEYS.entriesPrefix.length);
+    if(!isValidMonthKey(monthKey) || monthKey<=currentKey) return;
+
+    const monthEntries = safeArray(key);
+    const containsOnlyAutomaticEntries = monthEntries.every(entry=>Boolean(entry.recurringId));
+    const hasBudget = localStorage.getItem(budgetStorageKey(monthKey)) !== null;
+    const hasLegacyEntries = localStorage.getItem(`expenses:${monthKey}`) !== null;
+
+    if(containsOnlyAutomaticEntries && !hasBudget && !hasLegacyEntries){
+      localStorage.removeItem(key);
+      localStorage.removeItem(`lc:v3:ignoredRec:${monthKey}`);
+    }
+  });
+
+  const storedMonth = localStorage.getItem(KEYS.month);
+  if(isValidMonthKey(storedMonth) && storedMonth>currentKey && !monthHasSavedData(storedMonth)){
+    localStorage.setItem(KEYS.month,currentKey);
+  }
+
+  localStorage.setItem(KEYS.monthNavigationMigration,"1");
 }
 
 function loadPlanningData(){
@@ -294,6 +378,27 @@ function renderMonthHeader(){
   $("monthLabel").textContent = label;
   $("ledgerMonthLabel").textContent = label;
   localStorage.setItem(KEYS.month, getMonthKey());
+  renderMonthNavigation();
+}
+
+function renderMonthNavigation(){
+  const months = availableMonthKeys();
+  const currentKey = getMonthKey();
+  const currentIndex = months.indexOf(currentKey);
+  const previousButton = $("prevMonth");
+  const nextButton = $("nextMonth");
+  const createButton = $("createNextMonthBtn");
+
+  previousButton.disabled = currentIndex<=0;
+  nextButton.disabled = currentIndex<0 || currentIndex>=months.length-1;
+
+  const isLatestMonth = currentIndex===months.length-1;
+  createButton.hidden = !isLatestMonth;
+  if(isLatestMonth){
+    const nextKey = offsetMonthKey(currentKey,1);
+    const nextDate = dateFromMonthKey(nextKey);
+    createButton.textContent = `＋ Criar ${MONTHS[nextDate.getMonth()]} de ${nextDate.getFullYear()}`;
+  }
 }
 
 function renderSummary(){
@@ -801,9 +906,33 @@ function animateMonth(){
 }
 
 function changeMonth(delta){
-  currentDate = new Date(currentDate.getFullYear(),currentDate.getMonth()+delta,1);
+  const months = availableMonthKeys();
+  const currentIndex = months.indexOf(getMonthKey());
+  const targetKey = months[currentIndex+delta];
+
+  if(!targetKey){
+    showToast(delta>0 ? "Crie o próximo mês para avançar." : "Não há mês anterior criado.");
+    renderMonthNavigation();
+    return;
+  }
+
+  currentDate = dateFromMonthKey(targetKey);
   loadMonthData();
   animateMonth();
+}
+
+function createNextMonth(){
+  const nextKey = offsetMonthKey(getMonthKey(),1);
+  const createdMonths = explicitlyCreatedMonths();
+  if(!createdMonths.includes(nextKey)){
+    createdMonths.push(nextKey);
+    saveExplicitlyCreatedMonths(createdMonths);
+  }
+
+  currentDate = dateFromMonthKey(nextKey);
+  loadMonthData();
+  animateMonth();
+  showToast(`Mês de ${MONTHS[currentDate.getMonth()]} criado.`);
 }
 
 function activateView(target){
@@ -1459,7 +1588,7 @@ function toggleEntryPaid(entryId, e = null){
   }
   const entry = entries.find(item => item.id === entryId);
   if(!entry) return;
-  entry.paid = !(entry.paid === false);
+  entry.paid = entry.paid === false;
   saveMonthData();
   renderTransactions();
 
@@ -1700,11 +1829,13 @@ function setupSwipeGestures(){
 loadPlanningData();
 loadCategories();
 applyTextZoom(Number(localStorage.getItem(KEYS.textZoom)||1));
+cleanupLegacyAutoCreatedFutureMonths();
 
 const storedMonth = localStorage.getItem(KEYS.month);
-if(storedMonth && /^\d{4}-\d{2}$/.test(storedMonth)){
-  const [y,m] = storedMonth.split("-").map(Number);
-  currentDate = new Date(y,m-1,1);
+if(isValidMonthKey(storedMonth) && availableMonthKeys().includes(storedMonth)){
+  currentDate = dateFromMonthKey(storedMonth);
+}else{
+  currentDate = dateFromMonthKey(todayISO().slice(0,7));
 }
 
 // Carrega paleta de cores
@@ -1731,6 +1862,7 @@ document.querySelectorAll(".palette-card").forEach(card=>{
 
 $("prevMonth").addEventListener("click",()=>changeMonth(-1));
 $("nextMonth").addEventListener("click",()=>changeMonth(1));
+$("createNextMonthBtn").addEventListener("click",createNextMonth);
 
 document.querySelectorAll(".nav-item").forEach(btn=>{
   btn.addEventListener("click",()=>activateView(btn.dataset.target));
