@@ -39,7 +39,7 @@ Página institucional: <https://stack-error404.github.io/controle-gastos/docs/>
 Aplicativo: <https://stack-error404.github.io/controle-gastos/>
 
 ## Atualização
-O service worker usa um cache versionado (`livro-caixa-v4.1.0-r1`). Ao publicar uma atualização futura, incremente o sufixo `-rN` em `service-worker.js` e envie os arquivos para a branch `main`. Ao abrir o aplicativo, ele consulta automaticamente o service worker publicado; se houver uma versão nova, ativa o cache novo, remove o antigo e recarrega a tela. O app informa a verificação e confirma quando foi atualizado. O app continua funcionando offline com a última versão armazenada quando não houver conexão.
+O service worker usa um cache versionado (`livro-caixa-v4.1.0-r2`). Ao publicar uma atualização futura, incremente o sufixo `-rN` em `service-worker.js` e envie os arquivos para a branch `main`. Ao abrir o aplicativo, ele consulta automaticamente o service worker publicado; se houver uma versão nova, ativa o cache novo, remove o antigo e recarrega a tela. O app informa a verificação e confirma quando foi atualizado. O app continua funcionando offline com a última versão armazenada quando não houver conexão.
 
 ## Novidades 4.1.0
 - novo tema **NEON**, com fundo escuro, ciano elétrico, verde-limão e magenta;
