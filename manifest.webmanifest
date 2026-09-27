@@ -5,7 +5,7 @@
   "scope": "./",
   "display": "standalone",
   "background_color": "#241a15",
-  "theme_color": "#241a15",
+  "theme_color": "#050812",
   "description": "Controle financeiro pessoal em estilo de livro-caixa.",
   "icons": [
     {

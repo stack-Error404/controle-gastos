@@ -1,4 +1,4 @@
-const CACHE = "livro-caixa-v4.0.1-r8";
+const CACHE = "livro-caixa-v4.1.0-r1";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const APP_SHELL = [
   "./js/app.js",
   "./js/ocr-module.js",
   "./manifest.webmanifest",
+  "./docs/index.html",
   "./assets/icon-180.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png"

@@ -153,7 +153,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .stamp em{max-width:82%;font-size:6.5px;line-height:1.2;font-style:normal;opacity:.75;letter-spacing:.04em}
 .stamp-balance{color:var(--green)}
 .stamp-balance.negative{color:var(--red)}
-.stamp-income{color:#3e7358}
+.stamp-income{color:var(--green)}
 .stamp-expense{color:var(--red)}
 .stamp.stamp-hit{animation:stampHit .34s ease}
 .stamp-expense.budget-warning{
@@ -814,39 +814,55 @@ body.theme-rose-dark .text-action,body.theme-rose-dark .type-tab.active,body.the
 body.theme-rose-dark .type-tab.active{background:rgba(255,64,129,.12)}
 body.theme-rose-dark .budget-track span{background:#ff4081}
 
+/* 7. NEON Futurista */
+body.theme-neon{
+  --leather:#050812;--leather-2:#0b1222;--leather-3:#121d35;--leather-edge:#02040a;
+  --gold:#b8ff00;--gold-soft:#d8ff75;--paper:#0d1424;--paper-2:#111d31;--paper-shadow:#050a15;
+  --ink:#ecfbff;--ink-soft:#91b3c5;--line:#28415f;--green:#00f5d4;--green-2:#00bfa8;
+  --green-soft:#0b3539;--red:#ff3b81;--red-2:#d91f63;--red-soft:#42172d;
+}
+body.theme-neon .paper-page{box-shadow:0 15px 40px rgba(0,245,212,.12),inset 0 0 0 1px rgba(0,245,212,.25)}
+body.theme-neon .primary-paper-button{background:#00f5d4;color:#031016;font-weight:700;box-shadow:0 0 18px rgba(0,245,212,.28)}
+body.theme-neon .primary-paper-button:active{background:#00bfa8}
+body.theme-neon .secondary-paper-button{color:#00f5d4;border-color:rgba(0,245,212,.55)}
+body.theme-neon .text-action,body.theme-neon .type-tab.active,body.theme-neon .round-add{color:#00f5d4;border-color:#00f5d4}
+body.theme-neon .type-tab.active{background:rgba(0,245,212,.12)}
+body.theme-neon .budget-track span{background:#00f5d4}
+
 /* Aplicações comuns aos temas escuros */
-body.dark, body.theme-classic-dark, body.theme-red-dark, body.theme-rose-dark{
+body.dark, body.theme-classic-dark, body.theme-red-dark, body.theme-rose-dark, body.theme-neon{
   color-scheme:dark;
 }
 body.dark .paper-page,body.dark .paper-modal,
 body.theme-classic-dark .paper-page,body.theme-classic-dark .paper-modal,
 body.theme-red-dark .paper-page,body.theme-red-dark .paper-modal,
-body.theme-rose-dark .paper-page,body.theme-rose-dark .paper-modal{
+body.theme-rose-dark .paper-page,body.theme-rose-dark .paper-modal,
+body.theme-neon .paper-page,body.theme-neon .paper-modal{
   background:
     linear-gradient(90deg,rgba(0,0,0,.14),transparent 8%,transparent 92%,rgba(0,0,0,.16)),
     repeating-linear-gradient(var(--paper),var(--paper) 35px,var(--line) 36px),
     var(--paper);
 }
-body.dark .stamp,body[class*="-dark"] .stamp{background:rgba(255,255,255,.03)}
-body.dark .mini-stat,body[class*="-dark"] .mini-stat,
-body.dark .calendar,body[class*="-dark"] .calendar,
-body.dark .type-tab,body[class*="-dark"] .type-tab,
-body.dark .category-chip,body[class*="-dark"] .category-chip,
-body.dark .segmented,body[class*="-dark"] .segmented,
-body.dark .comparison-grid div,body[class*="-dark"] .comparison-grid div{background:rgba(255,255,255,.02)}
-body.dark .budget-track,body[class*="-dark"] .budget-track{background:rgba(255,255,255,.08)}
-body.dark input,body[class*="-dark"] input,
-body.dark select,body[class*="-dark"] select,
-body.dark textarea,body[class*="-dark"] textarea{color-scheme:dark}
-body.dark .money-input,body[class*="-dark"] .money-input,
-body.dark .form-field>input,body[class*="-dark"] .form-field>input,
-body.dark .form-field>select,body[class*="-dark"] .form-field>select,
-body.dark .form-field>textarea,body[class*="-dark"] .form-field>textarea,
-body.dark .inline-form input,body[class*="-dark"] .inline-form input,
-body.dark .search-box,body[class*="-dark"] .search-box,
-body.dark .filter-row select,body[class*="-dark"] .filter-row select{background:rgba(255,255,255,.025)}
-body.dark .donut-chart::after,body[class*="-dark"] .donut-chart::after{background:var(--paper)}
-body.dark .modal-ocr-section,body[class*="-dark"] .modal-ocr-section{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}
+body.dark .stamp,body[class*="-dark"] .stamp,body.theme-neon .stamp{background:rgba(255,255,255,.03)}
+body.dark .mini-stat,body[class*="-dark"] .mini-stat,body.theme-neon .mini-stat,
+body.dark .calendar,body[class*="-dark"] .calendar,body.theme-neon .calendar,
+body.dark .type-tab,body[class*="-dark"] .type-tab,body.theme-neon .type-tab,
+body.dark .category-chip,body[class*="-dark"] .category-chip,body.theme-neon .category-chip,
+body.dark .segmented,body[class*="-dark"] .segmented,body.theme-neon .segmented,
+body.dark .comparison-grid div,body[class*="-dark"] .comparison-grid div,body.theme-neon .comparison-grid div{background:rgba(255,255,255,.02)}
+body.dark .budget-track,body[class*="-dark"] .budget-track,body.theme-neon .budget-track{background:rgba(255,255,255,.08)}
+body.dark input,body[class*="-dark"] input,body.theme-neon input,
+body.dark select,body[class*="-dark"] select,body.theme-neon select,
+body.dark textarea,body[class*="-dark"] textarea,body.theme-neon textarea{color-scheme:dark}
+body.dark .money-input,body[class*="-dark"] .money-input,body.theme-neon .money-input,
+body.dark .form-field>input,body[class*="-dark"] .form-field>input,body.theme-neon .form-field>input,
+body.dark .form-field>select,body[class*="-dark"] .form-field>select,body.theme-neon .form-field>select,
+body.dark .form-field>textarea,body[class*="-dark"] .form-field>textarea,body.theme-neon .form-field>textarea,
+body.dark .inline-form input,body[class*="-dark"] .inline-form input,body.theme-neon .inline-form input,
+body.dark .search-box,body[class*="-dark"] .search-box,body.theme-neon .search-box,
+body.dark .filter-row select,body[class*="-dark"] .filter-row select,body.theme-neon .filter-row select{background:rgba(255,255,255,.025)}
+body.dark .donut-chart::after,body[class*="-dark"] .donut-chart::after,body.theme-neon .donut-chart::after{background:var(--paper)}
+body.dark .modal-ocr-section,body[class*="-dark"] .modal-ocr-section,body.theme-neon .modal-ocr-section{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}
 
 /* Modal e Seletor de Paletas */
 .palette-icon{font-size:18px}
@@ -918,6 +934,9 @@ body.dark .modal-ocr-section,body[class*="-dark"] .modal-ocr-section{background:
 
 .swatch-rose-dark{background:#1c1519;color:#fdf2f6}
 .swatch-rose-dark .swatch-accent{background:#ff4081}
+
+.swatch-neon{background:#0d1424;color:#ecfbff;box-shadow:inset 0 0 14px rgba(0,245,212,.12)}
+.swatch-neon .swatch-accent{background:#00f5d4;box-shadow:0 0 8px #00f5d4}
 
 .palette-info strong{
   display:block;

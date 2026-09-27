@@ -1,4 +1,6 @@
 
+const APP_VERSION = "4.1.0";
+
 const MONTHS = [
   "janeiro","fevereiro","março","abril","maio","junho",
   "julho","agosto","setembro","outubro","novembro","dezembro"
@@ -26,12 +28,13 @@ const KEYS = {
 const PAYMENT_LABELS={cash:"Dinheiro",pix:"Pix",debit:"Cartão de débito",credit:"Cartão de crédito",crypto:"Criptomoeda",unspecified:"Não informado"};
 
 const PALETTES = {
-  "classic-light": { name: "Clássico (Pergaminho)", dark: false },
-  "classic-dark": { name: "Clássico Noturno", dark: true },
-  "red-light": { name: "Branco & Vermelho", dark: false },
-  "red-dark": { name: "Preto & Carmim", dark: true },
-  "rose-light": { name: "Branco & Rosé", dark: false },
-  "rose-dark": { name: "Preto & Magenta", dark: true }
+  "classic-light": { name: "Clássico (Pergaminho)", dark: false, themeColor: "#241a15" },
+  "classic-dark": { name: "Clássico Noturno", dark: true, themeColor: "#141210" },
+  "red-light": { name: "Branco & Vermelho", dark: false, themeColor: "#c62828" },
+  "red-dark": { name: "Preto & Carmim", dark: true, themeColor: "#141416" },
+  "rose-light": { name: "Branco & Rosé", dark: false, themeColor: "#242223" },
+  "rose-dark": { name: "Preto & Magenta", dark: true, themeColor: "#161214" },
+  "neon": { name: "NEON", dark: true, themeColor: "#050812" }
 };
 
 let categories = [];
@@ -655,14 +658,6 @@ function filteredTransactions(){
   return filtered;
 }
 
-function debounce(fn, delay) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
 function updateSelectionUI(){
   const count = selectedEntryIds.size;
   if($("selectionCount")) $("selectionCount").textContent = `${count} selecionado${count===1?"":"s"}`;
@@ -1242,7 +1237,7 @@ function renderLastBackup(){
 function exportBackup(){
   const payload = {
     app: "Livro Caixa",
-    version: "4.0.1",
+    version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     storage: allRelevantStorage()
   };
@@ -1488,18 +1483,25 @@ function updatePwaStatus(){
 }
 
 async function refreshApp(){
-  showToast("Buscando atualização e limpando cache…");
+  const button = $("refreshAppBtn");
+  const label = button?.querySelector("span");
+  const originalLabel = label?.innerHTML;
+  if(button) button.disabled = true;
+  if(label) label.innerHTML = "Atualizando…<small>Verificando a versão mais recente</small>";
+  showToast("Verificando atualização…");
   try{
     if("serviceWorker" in navigator){
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r=>r.update()));
     }
-    if("caches" in window){
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k=>caches.delete(k)));
-    }
-  }catch{}
-  setTimeout(()=>location.reload(),400);
+    showToast("Atualização verificada. Recarregando…");
+  }catch{
+    showToast(navigator.onLine ? "Não foi possível verificar agora." : "Sem conexão. Usando a versão offline.");
+  }finally{
+    if(label && originalLabel) label.innerHTML = originalLabel;
+    if(button) button.disabled = false;
+  }
+  setTimeout(()=>location.reload(),700);
 }
 
 function applyTextZoom(value,announce=false){
@@ -1590,6 +1592,7 @@ function setPalette(paletteId, notify = true){
     "theme-red-dark",
     "theme-rose-light",
     "theme-rose-dark",
+    "theme-neon",
     "dark"
   );
   document.body.classList.add(`theme-${paletteId}`);
@@ -1598,6 +1601,7 @@ function setPalette(paletteId, notify = true){
   }
   localStorage.setItem(KEYS.palette, paletteId);
   localStorage.setItem(KEYS.theme, PALETTES[paletteId].dark ? "dark" : "light");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", PALETTES[paletteId].themeColor);
 
   document.querySelectorAll(".palette-card").forEach(card=>{
     card.classList.toggle("active", card.dataset.palette === paletteId);
@@ -2057,10 +2061,28 @@ document.addEventListener("keydown",e=>{
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("./service-worker.js").then(reg=>{
-      reg.update();
-    }).catch(()=>{});
+    // Em cada abertura, consulta o arquivo do service worker no GitHub Pages.
+    // Quando uma versão nova assume o controle, recarrega a tela uma única vez.
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    const pwaStatus = $("pwaStatus");
+    if(pwaStatus) pwaStatus.textContent = "Verificando atualização…";
+    if(hadController){
+      navigator.serviceWorker.addEventListener("controllerchange",()=>{
+        sessionStorage.setItem("lc:updateNotice","1");
+        location.reload();
+      },{once:true});
+    }
+
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(reg=>reg.update())
+      .then(()=>updatePwaStatus())
+      .catch(()=>updatePwaStatus());
   });
+}
+
+if(sessionStorage.getItem("lc:updateNotice")==="1"){
+  sessionStorage.removeItem("lc:updateNotice");
+  setTimeout(()=>showToast(`Livro Caixa atualizado para a versão ${APP_VERSION}.`),250);
 }
 
 setupSwipeGestures();
